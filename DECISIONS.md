@@ -761,3 +761,75 @@ load-bearing diagnostic
 - Effect: graph.summary reports n_modulator_nodes = 14. Modulator edges
   (`type="modulatory"`) remain 0 in 1.0.1 — those are 1.0.4 work.
 
+
+---
+
+## [Phase 1.0.2]
+
+### [2026-05-21 01:45] LIF dynamics: impulse form per design §2.1
+
+- Context: docs/phase1_design.md §2.1 specifies
+  ``V(t) = V(t-1) × (1 - 1/tau) + net_input`` — the impulse-input form
+  of LIF, distinct from the CTRNN form ``V += (-V + input)/tau`` used in
+  Phase 0.
+- Choice: implement literally as specified. ``net_input`` is in V-units
+  (a single arriving spike of signed_weight ~0.1 nudges V by ~0.1
+  directly).
+- Reason: matches design intent and makes single-spike effects
+  interpretable; doesn't conflate input gain with leak rate the way the
+  CTRNN form does.
+- Effect: chemical signals carry their weight as a direct V impulse; the
+  gap-junction term needs separate scaling (see next entry).
+
+### [2026-05-21 01:50] Gap-junction input scaled by 1/tau
+
+- Context: With the impulse form above, the discrete update matrix on
+  the leak+gap subsystem is ``(1 - 1/tau)I - L`` where ``L`` is the
+  graph Laplacian. The Laplacian's max eigenvalue is ≤ 2·max(row_sum) ≈ 2
+  in our normalized connectome. For tau=8 (sensory) the unstable
+  eigenvalue is ``|1 - 1/8 - 2| = 1.125 > 1`` → some modes diverge or
+  refuse to decay. The first attempt left one neuron stuck at V ≈ −0.75
+  even with zero drive for 2000 ticks.
+- Options: (a) clamp gap row sums during normalization; (b) scale gap
+  inputs by 1/tau (treat as slow conductance, as Phase 0's CTRNN did);
+  (c) increase tau across the board.
+- Choice: (b) — scale gap inputs by 1/tau in the runner before adding
+  to total_input.
+- Reason: matches the physiology — gap junctions are *continuous*
+  conductances, not impulses, so the 1/tau weighting is the natural
+  time-step discretization. Keeps chemical impulse behavior untouched.
+- Effect: with 1/tau scaling the system passes the zero-input decay
+  test (max |V| < 0.05 after 2000 ticks) and the 10k-tick stability
+  test (max |V| ≈ 3, finite throughout, 5000 spikes across 106
+  neurons).
+
+### [2026-05-21 01:55] SignalQueue as ring buffer keyed by delay buckets
+
+- Context: §3.1 of the design demands per-edge delays. For Phase 1.0.2
+  we initialize every chemical edge with delay=1 (the loader default),
+  so the buffer is effectively length 2.
+- Choice: build the queue with one dense (N×N) ``DelayBucket`` per
+  unique delay; ring buffer index = (tick + d) mod (max_delay + 1).
+- Reason: dense per-delay buckets are 1 MB each at N=302, trivial. The
+  ring-buffer interface scales to per-edge delays in Phase 1.0.4+
+  without API churn; only the loader's delay heuristic needs updating.
+- Effect: at uniform delay=1, the per-tick dispatch is one matvec
+  through a 302×302 dense matrix — 0.07 ms/tick total (well under the
+  1 ms/tick budget).
+
+### [2026-05-21 02:00] Rate trace = leaky integrator on spikes (tau_rate=30)
+
+- Context: For comparison against Atanas 2023 calcium traces in
+  Phase 1.0.5, we need a continuous activity readout from a spiking
+  network. Raw V trace is dominated by reset transients.
+- Options: (a) report V directly (jagged); (b) compute spike rate over
+  a sliding window (memory-heavy); (c) maintain a per-neuron leaky
+  integrator on the spike indicator (1-pole IIR LP filter).
+- Choice: (c) — ``rate[t] = rate[t-1] * (1 - 1/tau_rate) + spike[t]``
+  with tau_rate=30 ticks default.
+- Reason: this is exactly how GCaMP responds (slow LP filter on
+  underlying spike rate); the analogy is structural, not metaphorical.
+  No additional state beyond the (N,) ``rate`` array per tick.
+- Effect: Phase 1.0.5 will use ``rate`` (not ``V``) as the trace fed
+  into the three comparison metrics.
+
