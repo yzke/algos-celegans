@@ -149,3 +149,43 @@ implementation is recorded here. Format:
   scaffolding.
 - Reason: avoiding speculative abstractions per CLAUDE.md guidance.
 - Effects: anyone wanting a mock should provide it explicitly in Phase 1+.
+
+---
+
+## [Phase 0.5]
+
+Phase 0.5 is the independent-validation pass requested in
+`logs/phase0.5_brief.md`: confirm the bare neural skeleton's behavior
+against the published C. elegans electrophysiology literature before
+Phase 1 adds a body. The brief also dispositions every Phase 0 question
+(`QUESTIONS.md`) and asks for a design-doc revision to v0.3.
+
+### [2026-05-20 10:05] Design doc bumped to v0.3 (4-part revision)
+
+- Context: `logs/phase0.5_brief.md` § 2 lists four specific changes to
+  `docs/design.md`.
+- Choice: apply all four in one v0.3 commit, no other changes:
+  - §3.3 — activation flipped from `sigmoid(V) − 0.5` (Phase 0 patch)
+    to the canonical `tanh(β V)`. Documented as a formal design choice,
+    not a patch.
+  - §3.1 — added the actual Cook 2019 (corrected July 2020) connection
+    counts (302 neurons; 3,709 directed chem pairs; 1,091 unique gap
+    pairs; category breakdown). Noted that White 1986 ~7000/~600 is
+    superseded.
+  - §6.1 — refreshed the data-audit table: connectome and GABA list
+    marked "已集成 (Phase 0)", added the Phase 0.5 reference-data row.
+  - §4.4 — added the explicit *grounding principle* paragraph:
+    "all sensory inputs must be set-point deviations or prediction
+    signals, never absolute values; concrete formulas to be fixed in
+    Phase 1 informed by the Phase 0.5 validation report".
+  - §12 — new section (与外部资源的关系) explaining what we adopt
+    directly (Cook 2019, Atanas 2023, Kato 2015), what we look at but
+    rewrite (OpenWorm Sibernetic / c302 / WormSim), and why the project
+    does not consume OpenWorm wholesale.
+- Reason: brief was explicit and well-scoped. Per the brief's instruction
+  ("修订主设计文档要单独 commit"), doc lands in its own commit before
+  any Phase 0.5 implementation work.
+- Effects: code (still `σ(V) − 0.5`) and doc (now `tanh(β V)`) are
+  briefly out of sync until the next commit, which flips the dynamics
+  module to match. Two compiled cache files (`connectome.npz`) are
+  unaffected — they hold raw matrices, not activation choice.
