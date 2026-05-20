@@ -1,309 +1,314 @@
-# Phase 0.8 — Where the FC gap lives
+# Phase 0.8 — Heterogeneous neuron architecture
 
 > Generated: 2026-05-20
-> Question being asked: Phase 0.7 reported a digital-vs-real FC
-> similarity gap of +0.45 (digital ≈ 0.03 vs real cross-worm ≈ 0.48).
-> Where in the 29×29 matrix is that gap concentrated? Is it uniform or
-> dominated by a few neuron pairs / categories?
-> Method: per-pair FC subtraction on the strict-intersection 29-neuron
-> set across 10 best-labeled Atanas 2023 recordings.
+> Brief: `logs/phase0.8_heterogeneous.md`
+> Status: 0.8.1, 0.8.2, 0.8.3 all complete; PHASE0.8_diagnostic.md
+> (the earlier "where does the FC gap live?" work) preserved as a
+> separate file.
+
+This report covers the three-sub-phase architectural change from the
+homogeneous Phase 0.7 CTRNN to a per-neuron-step-function dispatch
+("matrix W + heterogeneous neuron functions"). The brief framed this
+as the project's largest architectural change to date because
+Phase 0.6/0.7 had falsified the assumption that a uniform CTRNN with
+sufficient scale would produce real-worm-like dynamics.
 
 ---
 
-## 1. Setup
+## 1. Three sub-phases — completion status
 
-| | |
-|---|---|
-| recordings | 10 best-NeuroPAL-labeled (same as Phase 0.7) |
-| matched neurons | **29** (strict intersection across all 10 + in connectome) |
-| matched pairs | 29×28 / 2 = **406** |
-| FC_real | per-recording Pearson correlation, then averaged |
-| FC_digital | one bare-CTRNN sim per recording (Phase 0.5 protocol A), then averaged |
-| runtime | 2.2 s end to end |
+| Sub-phase | Description | Status | Key result |
+|---|---|---|---|
+| **0.8.1** | Refactor: matrix + per-neuron step function dispatch | ✅ done | All-`ctrnn_default` matches Phase 0.7 bit-exactly (noise=0) and < 1e-6 (noise on); 30/30 tests pass; 0.094 ms/tick worst case (100× under budget) |
+| **0.8.2** | Three category-default step functions | ✅ done | fc_similarity ↑ +0.044 vs homogeneous (largest single architectural gain in the project) |
+| **0.8.3** | Specialized step functions for ASE/AFD/AVA/AVB/RIM (14 neurons) | ✅ done | **Regressed** fc by −0.016 vs 0.8.2 — synthetic per-neuron sketches don't help without body+modulators |
 
-Category mix of the 29 matched neurons:
-
-| category | count | members |
-|---|---:|---|
-| sensory | 11 | ADAL, ADEL, ASGR, CEPDL, IL2DL, OLLL, OLLR, OLQDL, URYVL, URYVR, URBR |
-| interneuron | 9 | AIBL, AIBR, AIZR, AVAL, AVDR, AVER, AVJR, RID, RIVL |
-| pharyngeal | 5 | I2L, I3, M3L, M3R, NSML |
-| motor | 4 | RMDDL, RMEL, RMER, SMDVL |
-
-(URBR substituted in for clarity; see JSON for exact list.)
+All commits used `[phase0.8.x]` prefix; the architecture refactor
+(0.8.1), category-default heterogeneity (0.8.2), and key-neuron
+specialization (0.8.3) each got their own commit + checkpoint note in
+`notes/`.
 
 ---
 
-## 2. The dominant finding: signs are systematically flipped
+## 2. Architecture (0.8.1)
 
-**The FC gap is not about magnitudes — it's about signs.**
+```
+src/algos/neural/heterogeneous.py:
+  HeterogeneousNetwork(connectome, function_assignment, function_params, ...)
+  HeterogeneousState(V_history, tick)
+  STEP_LIBRARY: dict[str, StepFunction]
+  ctrnn_default(V_current, total_input, V_history, params) → V_new
+```
 
-| statistic | FC_real (406 pairs) | FC_digital (406 pairs) |
-|---|---:|---:|
-| mean | **+0.08** | **+0.28** |
-| std  | 0.26 | 0.24 |
-| frac. with opposite sign to the other matrix | **36.9%** | (same) |
-| frac. with opposite sign in top-50 \|diff\| pairs | **62.0%** | (same) |
+Per-tick algorithm:
 
-Among the **top-50 \|diff\| pairs**:
-- **31 pairs**: FC_real is **negative**, FC_digital is **positive** (anti-correlation flipped to co-activation).
-- **19 pairs**: both positive, digital larger (over-correlation).
-- **0 pairs**: FC_real positive, FC_digital negative.
+1. Compute `chem_input = W_chem @ tanh(β·V)` globally.
+2. Compute `gap_input = W_gap @ V − V · sum(W_gap)` globally.
+3. Compute `total_input = chem + gap + sensory + noise` globally.
+4. For each function group (neurons sharing a step function), call the
+   group's step function on the group's slice of `(V_current,
+   total_input, V_history, params)`.
 
-The digital model **never** produces anti-correlation where the real
-worm shows correlation. It frequently produces co-activation where the
-real worm shows anti-correlation. **The gap is the missing
-anti-correlations.**
+`V_history` is a fixed-length circular buffer (default 5 ticks).
+Step functions that need only V[t-1] (most) ignore it. Step functions
+that need V[t-1] − V[t-2] (e.g. `slow_persistent`'s momentum term;
+0.8.3's specialized functions) read it directly.
 
-### What's actually going on
+### Numerical equivalence
 
-In real worms, locomotion involves mutually-exclusive behavioral
-states (forward ↔ reverse, head-bend-dorsal ↔ head-bend-ventral,
-feeding-active ↔ feeding-quiescent). State-specific neurons
-**anti-correlate**: when AVA fires, RID does not, and vice versa. When
-M3 fires (pumping), I3 does not.
+When every neuron uses `ctrnn_default`, the heterogeneous network
+reproduces Phase 0.7's `neural_step` **bit-exactly** at noise=0 (max
+|ΔV| < 1e-12) and with the same RNG sequence to <1e-6 with noise on.
+Verified by `tests/test_heterogeneous.py::test_homogeneous_equivalence`
+and `test_homogeneous_equivalence_no_noise`.
 
-Our bare CTRNN sees random Gaussian noise distributed across all 83
-sensory neurons. There is no behavioral state, no winner-take-all
-dynamics, no neuromodulator-gated commitment to a state. The
-recurrent dynamics tend to co-activate connected pools. The mean FC
-of +0.28 is the signature of this "everything is mildly
-correlated through the network" pattern.
+### Performance
 
----
+| path | ms/tick |
+|---|---:|
+| Phase 0.7 `neural_step` | 0.075 |
+| Heterogeneous, 1 group (= all `ctrnn_default`) | 0.070 |
+| Heterogeneous, 5 groups | 0.094 |
+| Heterogeneous, 8 groups (with 0.8.3 specializations) | ~0.10 |
 
-## 3. Top-20 highest-|diff| pairs
-
-| pair | cat_a × cat_b | FC_real | FC_digital | diff |
-|---|---|---:|---:|---:|
-| I3 — NSML | pharyngeal × pharyngeal | **−0.68** | **+0.79** | **−1.47** |
-| AVER — RID | interneuron × interneuron | −0.61 | +0.71 | −1.32 |
-| AVAL — RID | interneuron × interneuron | −0.56 | +0.75 | −1.31 |
-| AVER — RMER | interneuron × motor | −0.54 | +0.66 | −1.20 |
-| AVER — RMEL | interneuron × motor | −0.51 | +0.68 | −1.19 |
-| AIBL — RID | interneuron × interneuron | −0.52 | +0.66 | −1.18 |
-| AIBR — RID | interneuron × interneuron | −0.51 | +0.66 | −1.17 |
-| AIBL — RMER | interneuron × motor | −0.55 | +0.57 | −1.12 |
-| AIBR — RMER | interneuron × motor | −0.55 | +0.56 | −1.10 |
-| AVAL — RMER | interneuron × motor | −0.53 | +0.52 | −1.06 |
-| AVAL — RMEL | interneuron × motor | −0.51 | +0.53 | −1.03 |
-| AIBL — RMEL | interneuron × motor | −0.46 | +0.56 | −1.02 |
-| AIBR — RMEL | interneuron × motor | −0.47 | +0.56 | −1.02 |
-| AVER — SMDVL | interneuron × motor | −0.04 | +0.83 | −0.87 |
-| ADAL — RID | interneuron × interneuron | −0.25 | +0.62 | −0.87 |
-| RID — RIVL | interneuron × motor | −0.16 | +0.70 | −0.86 |
-| I3 — M3L | pharyngeal × pharyngeal | −0.05 | +0.79 | −0.84 |
-| I3 — M3R | pharyngeal × pharyngeal | −0.03 | +0.79 | −0.82 |
-| AIZR — RID | interneuron × interneuron | −0.22 | +0.59 | −0.81 |
-| RID — URYVL | interneuron × sensory | −0.49 | +0.30 | −0.79 |
-
-**Every single one** is FC_real negative → FC_digital positive
-(or weakly negative). The biology behind these:
-
-- **RID** is a forward-locomotion modulator (releases neuropeptides
-  promoting forward). It anti-correlates with reversal command (AVA,
-  AVE, AVD) and with the AIB integrator family. RID appears in **11
-  of the top-50 pairs** — the most concentrated "problem hub" by far.
-- **RME family** (RMEL, RMER, RMDDL) are head-bend motor neurons.
-  They are state-specific: head bends correlate with reversal,
-  anti-correlate with forward locomotion.
-- **I3 / NSML / M3** are pharyngeal: feeding state is decoupled
-  from locomotion in real worms. We have no feeding state.
-- **AIB** family (AIBL, AIBR) are integrators that gate reversal:
-  anti-correlated with forward-promoting RID.
+Budget was < 10 ms/tick. We're 100× under. No bottleneck.
 
 ---
 
-## 4. Category-combo breakdown (mean |diff|)
+## 3. Category-default heterogeneity (0.8.2)
 
-| category combination | n_pairs | mean \|diff\| | median \|diff\| | max \|diff\| |
+Three new step functions assigned by category:
+
+| function | applied to | parameters | computational structure |
+|---|---|---|---|
+| `fast_filter` | sensory (83 neurons) | τ=5, β=5 | V ← tanh(β·input) target |
+| `integrator` | interneuron (81) | τ=20 | leaky `dV = (−V + input)/τ` |
+| `slow_persistent` | motor (108) | τ=50 | leaky + `0.2·(V[t-1] − V[t-2])` momentum |
+| `ctrnn_default` | pharyngeal (20), sex_specific (8), other (2) | τ=15/20/20 | Phase 0.7 default |
+
+### Comparison vs Phase 0.7 (10 best-labeled Atanas 2023 recordings)
+
+| metric | homogeneous | **category (0.8.2)** | Δ |
+|---|---:|---:|---:|
+| subspace_alignment | +0.398 | +0.360 | −0.038 |
+| temporal_correlation | −0.007 | +0.004 | +0.011 |
+| **fc_similarity** | **+0.026** | **+0.059** | **+0.032** |
+
+(0.8.2 standalone run, PYTHONHASHSEED-based RNG seeds; 0.8.3's stable-
+seed re-run gives a slightly different `+0.061` for the same condition.
+The qualitative finding is robust.)
+
+The architectural change closes ~7% of the original Phase 0.7 FC gap
+(+0.45 → +0.42 to enter the cross-worm 5%-tile). Notable but not
+enough by itself.
+
+---
+
+## 4. Key-neuron specialization (0.8.3) — honest negative result
+
+Four specialized step functions implemented and assigned to 14 neurons:
+
+| function | neurons | shape |
+|---|---|---|
+| `change_detector` | ASEL (polarity+1), ASER (polarity−1) | `tanh(polarity·gain·(input − V))` integrated with τ |
+| `setpoint_deviation` | AFDL (+1), AFDR (−1) | `tanh(gain·polarity·(input − setpoint))` |
+| `threshold_accumulator` | AVAL/AVAR/AVDL/AVDR, AVBL/AVBR/PVCL/PVCR | leaky integrator + soft latch above threshold |
+| `bistable_switch` | RIML, RIMR | drive + `self_gain · tanh(3·V)` (attractors near ±1) |
+
+### Three-way comparison (stable seeds, 10 recordings)
+
+| metric | homogeneous | category (0.8.2) | key_neuron (0.8.3) | Δ key vs cat |
 |---|---:|---:|---:|---:|
-| **pharyngeal × pharyngeal** | 10 | **0.68** | 0.64 | 1.47 |
-| **interneuron × motor** | 36 | **0.67** | 0.63 | 1.20 |
-| **interneuron × interneuron** | 36 | **0.59** | 0.60 | 1.32 |
-| motor × motor | 6 | 0.53 | 0.50 | 0.74 |
-| interneuron × sensory | 99 | 0.24 | 0.21 | 0.79 |
-| interneuron × pharyngeal | 45 | 0.24 | 0.21 | 0.62 |
-| motor × sensory | 44 | 0.20 | 0.16 | 0.65 |
-| sensory × sensory | 55 | 0.17 | 0.12 | 0.66 |
-| motor × pharyngeal | 20 | 0.14 | 0.12 | 0.42 |
-| pharyngeal × sensory | 55 | **0.12** | 0.07 | 0.43 |
+| subspace_alignment | +0.394 | +0.353 | +0.349 | −0.005 |
+| temporal_correlation | −0.003 | −0.014 | −0.016 | −0.002 |
+| **fc_similarity** | **+0.017** | **+0.061** | **+0.044** | **−0.016** |
 
-The gap is **concentrated in inter–inter, inter–motor, and the
-intra-pharyngeal subnetwork** (mean |diff| 0.59–0.68). It is
-**smallest for sensory–sensory and sensory–pharyngeal pairs**
-(mean |diff| 0.12–0.17), where neither real nor digital activity is
-strongly state-dependent.
+**Per-neuron specialization regressed FC by −0.016 relative to category
+defaults.** This is the honest, important finding. The architectural
+heterogeneity (going from 1 step function to 4) does the real work.
+Going from 4 to 8 with finer per-neuron sketches doesn't help.
 
-This precisely matches the "missing anti-correlations" reading. The
-inter–motor and inter–inter category combos are where the **command
-neuron / motor pool / modulator dance** happens, and that dance is
-state-dependent. Sensory–sensory pairs don't depend on state in real
-worms either, so the gap is small.
+### Why the specializations didn't help
 
----
+The synthetic step functions need supporting infrastructure the bare
+Phase 0.8 network does not have:
 
-## 5. Top-10 hub neurons (appearances in top-50 |diff| pairs)
+- `change_detector` needs time-correlated sensory input → Phase 1.
+- `threshold_accumulator` needs the network to push AVA past the
+  threshold at biologically-meaningful moments → Phase 1 + Phase 3.
+- `bistable_switch` picks an attractor on initial-condition noise →
+  needs Phase 3 modulators to gate the choice biologically.
+- `setpoint_deviation` with setpoint=0 is essentially a gain on input.
 
-| neuron | category | count in top-50 |
-|---|---|---:|
-| **RID**   | interneuron | **11** |
-| AVDR  | interneuron | 9 |
-| **RMER**  | motor | 8 |
-| **SMDVL** | motor | 8 |
-| AIBL  | interneuron | 6 |
-| AIBR  | interneuron | 6 |
-| AVAL  | interneuron | 6 |
-| AVER  | interneuron | 6 |
-| AVJR  | interneuron | 6 |
-| I3    | pharyngeal | 5 |
-
-**RID is the single most important problem node.** It is the
-forward-locomotion modulator (releases neuropeptides FLP-14, FLP-1)
-and is supposed to anti-correlate with the reversal command pool. In
-the bare CTRNN it co-activates with everything because there's no
-modulator dynamics and no forward/reverse state machine.
-
-The next 4 hubs (AVDR, RMER, SMDVL, AIBL/R) are all about the
-forward/reverse motor switch. The hub list is essentially "the
-forward/reverse dichotomy operationalized".
-
-I3 is the pharyngeal stand-in for the missing feeding state.
+These step functions are mathematical sketches in the right shape, but
+without the surrounding **input time-structure** (Phase 1) and
+**cross-neuron mutual-exclusion mechanisms** (Phase 3 modulators), they
+don't pay off.
 
 ---
 
-## 6. Implications for Phase priorities
+## 5. Where the digital worm sits now
 
-### 6.1 Phase 1 (body) alone will not close most of this gap
+Phase 0.7's three target metrics, mean across 10 recordings, vs the
+real-worm cross-worm baseline established in Phase 0.7:
 
-Phase 1's body adds physical state, sensory translation, and motor
-output. Plausible Phase 1 effects on FC:
+| metric | digital (best of 3 configs) | cross-worm mean | cross-worm p5 | percentile |
+|---|---:|---:|---:|---:|
+| subspace_alignment | +0.398 (homogeneous) | +0.593 | +0.537 | **0%** |
+| temporal_correlation | +0.011 (category) | +0.122 | +0.049 | **0%** |
+| fc_similarity | +0.061 (category) | +0.478 | +0.348 | **0%** |
 
-- ✅ **Sensory–sensory pairs** improve: a body in motion sees
-  correlated sensory streams (chemical concentration ↔ thermal
-  gradient ↔ touch). But this category already has small gaps
-  (0.17 mean |diff|) so the absolute improvement is bounded.
-- ✅ **Sensory–motor pairs** improve modestly: motor feedback
-  closes the perception–action loop.
-- ⚠ **Inter–inter / inter–motor / inter–pharyngeal pairs**:
-  Phase 1's mechanical commitment (a moving worm has momentum;
-  reversal is expensive) will create some hysteresis on the
-  forward/reverse state, which should help the command neurons
-  anti-correlate. But the *commitment to forward or reverse* is
-  primarily set by modulator state in real worms, not just by
-  mechanics.
-- ❌ **Pharyngeal × pharyngeal** (0.68 mean |diff|): Phase 1 has no
-  feeding-state model, so this category will not improve.
+**The digital worm is still at the 0th percentile on all three metrics**
+in the real-worm cross-worm distribution. Phase 0.8's architectural
+change moved fc_similarity from +0.03 to +0.06 — a real improvement,
+but +0.29 short of entering the real-worm distribution.
 
-Estimate: Phase 1 alone probably moves fc_similarity from +0.03 to
-maybe +0.10–0.15. The cross-worm 5%-tile (entering the real
-distribution) is +0.35. **Phase 1 alone is not enough.**
-
-### 6.2 Phase 3 (modulators) is more important than its number suggests
-
-The hub analysis named **RID** as the single biggest problem node,
-and **RID's whole job is releasing neuropeptides** (FLP-14, FLP-1).
-The bare CTRNN cannot represent RID's modulatory output — it has no
-modulator state variable.
-
-The forward/reverse switch in real worms is implemented by a
-combination of:
-- **Mutual inhibition** in the command circuit (partly in the
-  connectome — AIB → RIM → AVA chain).
-- **Neuropeptide release** (RID's role; also AVK, ASI; modulated
-  by PDF, FLP, etc.).
-- **Body feedback** (Phase 1).
-
-Modulator state is the missing piece without which the dance is
-fundamentally underdetermined. The Phase 0 design doc §1.3 already
-makes "multi-timescale structure" a non-negotiable commitment;
-Phase 0.8 quantifies that commitment.
-
-**Recommendation: Phase 3 (modulators) should be planned to follow
-Phase 1 closely, and the Phase 1 success criterion should explicitly
-include "FC gap on the inter-inter / inter-motor categories does not
-remain larger than 0.30 after Phase 1" — if it does, do not delay
-Phase 3.**
-
-A more aggressive option: **prototype a minimal modulator system in
-parallel with Phase 1**, even before the full Phase 3, with only RID's
-neuropeptide release implemented. This single mechanism would attack
-the largest single hub (RID) directly and might cut the FC gap by
-~30–40% on its own.
-
-### 6.3 Phase 4 (plasticity) is not urgent
-
-Hebbian plasticity sharpens existing patterns; it cannot create the
-missing forward/reverse mutual exclusion from scratch. The Phase 0.8
-diagnosis suggests plasticity is most useful **after** body +
-modulators are in place. Push Phase 4 later in the schedule than
-originally implied.
-
-### 6.4 A specific Phase-3 minimal viable feature
-
-The smallest modulator mechanism that would meaningfully attack the
-gap: **a single slow neuropeptide variable `c_RID` whose target is
-RID activity and which suppresses the AVA reversal command pool**.
-This is concretely:
-
-```python
-# in Phase 3 mod loop
-c_RID += (V[idx['RID']] - c_RID) / TAU_RID            # TAU_RID ~ 200 ticks
-for j in REVERSAL_COMMAND_TARGETS:                     # AVA, AVE, AVD
-    extra_input[j] -= MOD_GAIN * c_RID
-```
-
-This adds 1 modulator variable and 6 lines of code, and directly
-addresses the #1 hub neuron found in this audit.
+The architecture is now correct. The remaining gap is not about how
+neurons compute; it is about what they compute *over*.
 
 ---
 
-## 7. What this rules out
+## 6. Summary of decisions
 
-- ❌ **"The connectome topology is wrong."** The gap is not
-  uniformly distributed across pairs; it is concentrated where
-  state-dependent anti-correlations would be expected. The same
-  sensory–sensory pairs that should be state-independent show small
-  gaps. The connectome is probably fine.
-- ❌ **"We need a different normalization / activation."** Phase 0.6
-  showed the metric is barely sensitive to those choices; the FC gap
-  here is structural, not numerical.
-- ❌ **"We need more sensory drive."** Adding drive will not flip
-  signs — it will just amplify the existing pattern.
+(`DECISIONS.md` `## [Phase 0.8.1/2/3]` for the full audit trail.)
 
----
-
-## 8. Single-sentence summary
-
-The +0.45 FC similarity gap is not a magnitude problem but a *sign*
-problem — 37% of all neuron-pair correlations have opposite sign in
-real vs digital, and the missing signal is the
-**behavioral-state-dependent anti-correlations** mediated by
-modulators (esp. RID) and the forward/reverse mutual-exclusion
-machinery — meaning Phase 1 (body) alone will not close most of this
-gap and Phase 3 (modulators) should be planned to follow it
-immediately, with a minimal RID-neuropeptide variable prototyped in
-parallel if possible.
+| decision | rationale | location |
+|---|---|---|
+| New module, not replace `neural_step` | Coexist with Phase 0.7; equivalence test guards | `src/algos/neural/heterogeneous.py` |
+| String function names, not int IDs | Readability; zero performance cost | `function_assignment` is `list[str]` |
+| Per-neuron params as length-N ndarrays | Vectorized group dispatch; harmless extra keys | `function_params: dict[str, np.ndarray]` |
+| V_history as fixed-length circular buffer | Cheap, enables derivative/momentum reads | `history_len = 5` |
+| Keep brief's β=5 for `fast_filter` | Respect the brief's stated defaults | `step_library.py` |
+| Stable seeds (`1000 + index`) for 0.8.3 onwards | Found that `hash(s)` is PYTHONHASHSEED-randomized | `scripts/run_phase0_8_3_comparison.py` |
 
 ---
 
-## 9. Generated artifacts
+## 7. Honest gap assessment
+
+### What Phase 0.8 closed
+
+- **fc_similarity gap: ~7% of the original closed** (+0.026 → +0.059 with
+  category defaults; or +0.017 → +0.061 with the stable-seed re-run).
+- **Architecture: completely refactored** to support per-neuron
+  computation without modifying the connectome, normalization, or
+  Phase 0.7 code paths.
+- **Performance budget: 100× headroom.** No future scaling concern.
+
+### What Phase 0.8 did not close
+
+- **0th percentile remains 0th percentile.** No metric crossed into
+  the real-worm distribution.
+- **The +0.45 FC gap is now +0.42.** Most of it still there.
+- **Per-neuron specialization didn't help.** The expected pay-off from
+  treating ASE / AVA / RIM specially didn't appear, because their
+  specialized functions need infrastructure the bare network lacks.
+
+### What the gap is now made of
+
+Phase 0.8_diagnostic (the prior "where is the FC gap" analysis)
+identified: ~37% of all neuron-pair correlations sign-flipped between
+real and digital, with the bare CTRNN systematically failing to
+reproduce *anti-correlations* mediated by behavioral-state mutual
+exclusion. Phase 0.8's architectural change reduced this by a small
+amount (~7%); the rest of the gap continues to live in mechanisms the
+unit-level step functions cannot capture by themselves:
+
+1. **Time-structured sensory input.** Random Gaussian noise has no
+   temporal coherence; real worms see correlated sensory streams.
+   `change_detector` and similar derivative-based functions are
+   useless on white noise. → Phase 1.
+2. **Behavioral commitment / body mechanics.** A worm in motion has
+   physical state that gates command-neuron transitions. Without it,
+   `threshold_accumulator` for AVA cycles spuriously. → Phase 1.
+3. **Modulator gating.** RID (the #1 problem hub from Phase 0.8
+   diagnostic) is a neuropeptide releaser. A unit-level step function
+   cannot represent its modulatory action on the rest of the network.
+   → Phase 3.
+4. **Mutual inhibition that is dynamic, not just structural.** The
+   forward/reverse switch in real worms uses cross-modulator
+   competition that doesn't reduce to per-unit dynamics. → Phase 3.
+
+---
+
+## 8. Recommendations for Phase 1 priorities
+
+1. **Adopt the heterogeneous architecture as the default for Phase 1+.**
+   `from_category_defaults(connectome)` gives a clean +0.03 to +0.04
+   FC improvement at zero engineering cost. Use it.
+
+2. **Do not invest more in per-neuron specialization until Phase 1 + 3
+   are in place.** 0.8.3 demonstrated that synthetic step functions
+   without supporting infrastructure regress, not improve.
+
+3. **Phase 1's body delivers what 0.8.3's `change_detector` and
+   `threshold_accumulator` were missing**: time-structured sensory
+   input + behavioral state commitment. Once that lands, **re-run the
+   0.8.3 specializations on the Phase 1 body** — they may finally start
+   to help, and we'll have a clean comparison.
+
+4. **Phase 3 (modulators) is more important than the Phase 0 schedule
+   implied.** The Phase 0.8 diagnostic flagged RID (a neuropeptide
+   releaser) as the #1 problem hub. The Phase 0.8.3 attempt at
+   `bistable_switch` for RIM hit the limit of what unit-level
+   dynamics can do. Modulators are not optional.
+
+5. **Use stable seeds.** Every script from Phase 1 onward should set
+   seeds explicitly (not via `hash()`). Phase 0.5/0.7/0.8.2 numbers
+   are correct realizations but not bit-reproducible across runs.
+
+6. **Use `subspace_alignment` alone as the headline PCA metric.**
+   Phase 0.6 already established this. Phase 0.8 confirmed it remains
+   sensitive: category heterogeneity moved it from 0.398 → 0.353 (a
+   trade-off vs FC), telling us something real about how the
+   architecture trades off correlation structure across the two metrics.
+
+---
+
+## 9. Single-sentence summary
+
+Phase 0.8 refactored the project from "homogeneous CTRNN" to "matrix
++ per-neuron step functions" without breaking anything (30→32 tests
+pass, 0.094 ms/tick, < 1e-6 equivalence at the homogeneous default),
+recovered ~7% of the Phase 0.7 fc_similarity gap with simple
+category-based defaults, and showed honestly that fine per-neuron
+specializations actually regress without supporting body+modulator
+infrastructure — confirming Phase 1 (body) and Phase 3 (modulators) as
+the necessary next investments, in that order, with category
+heterogeneity adopted as the default from Phase 1 onwards.
+
+---
+
+## 10. Artifacts
 
 ```
-scripts/run_fc_gap_diagnosis.py
-output/fc_gap_diagnosis_report.txt
-output/fc_gap_diagnosis_results.json
-output/fc_gap_heatmap.png                # FC_real / FC_digital / FC_diff
-PHASE0.8_REPORT.md                       # this file
+NEW  src/algos/neural/heterogeneous.py             # 0.8.1 architecture
+NEW  src/algos/neural/step_library.py              # 0.8.2 + 0.8.3 step functions
+MOD  src/algos/neural/__init__.py                  # re-exports only
+
+NEW  tests/test_heterogeneous.py                   # 7 new tests, all pass
+
+NEW  scripts/run_phase0_8_2_comparison.py
+NEW  scripts/run_phase0_8_3_comparison.py
+NEW  output/phase0_8_2_comparison_{report.txt,results.json}
+NEW  output/phase0_8_3_comparison_{report.txt,results.json}
+
+NEW  notes/phase0.8.1_checkpoint.md
+NEW  notes/phase0.8.2_checkpoint.md
+NEW  notes/phase0.8.3_checkpoint.md
+
+MOD  DECISIONS.md                                  # ## [Phase 0.8.1/2/3]
+NEW  PHASE0.8_REPORT.md                            # this file
+RNM  PHASE0.8_REPORT.md → PHASE0.8_diagnostic.md   # the earlier diagnostic
 ```
 
-The heatmap visually confirms the story: `FC_real` has both
-red (positive) and blue (negative) blocks structured by category;
-`FC_digital` is almost entirely red; `FC_real - FC_digital` is almost
-entirely blue (i.e. digital exceeded real).
+Tests: **32 pass** (Phase 0 originals + Phase 0.5 specificity +
+Phase 0.8.1/2 heterogeneous).
+
+Total compute for Phase 0.8 comparison runs: ~25 seconds across both
+scripts (10 recordings × 3 networks each).
 
 ---
 
 *Last updated: 2026-05-20*
-*Status: Phase 0.8 complete; FC gap diagnosed as sign-flip problem
-centered on state-dependent neuron classes; Phase 3 priority raised.*
+*Status: Phase 0.8 complete; architecture in place; ready for Phase 1*
+*Recommendation: Phase 1 (body) → Phase 3 (modulators) → revisit 0.8.3 specializations.*
