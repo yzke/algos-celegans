@@ -1,0 +1,86 @@
+AC0.5.3 — Key-neuron functional specificity report
+============================================================
+connectome:       Cook 2019 corrected, N=302
+dynamics:         tanh(β=1·V), τ=10, noise=0
+pre-eq baseline:  max|V| ≈ 3.61e-08
+runtime:          2.65s for 6 tests
+min magnitude:    0.01 (responses below this → FAIL)
+
+Overall: 6/6 tests pass
+============================================================
+
+[PASS] ASEL → AIY (chemotaxis upstream)          drive=[ASEL] (×0.5) → target=[AIYL,AIYR]  expected ↑  mean ΔV=+0.1743  max|ΔV|=0.1854
+     notes: ASEL is excitatory cholinergic to AIY (Suzuki 2008, Bargmann 2006).
+     AIYL    ΔV=+0.1854
+     AIYR    ΔV=+0.1632
+     driven max|V| across whole network = 0.4005
+
+[PASS] ASER → AIY/AIB (chemotaxis upstream)      drive=[ASER] (×0.5) → target=[AIYL,AIYR,AIBL,AIBR]  expected ↑  mean ΔV=+0.1291  max|ΔV|=0.1666
+     notes: ASER is excitatory to AIY (and weaker to AIB) per Cook 2019.
+     AIYR    ΔV=+0.1666
+     AIYL    ΔV=+0.1359
+     AIBR    ΔV=+0.1121
+     AIBL    ΔV=+0.1018
+     driven max|V| across whole network = 0.4285
+
+[PASS] AVAL+AVAR → VA/DA (backward command → cholinergic motor)  drive=[AVAL,AVAR] (×0.5) → target=[VA01,VA02,VA03,VA04…]  expected ↑  mean ΔV=+0.1069  max|ΔV|=0.1390
+     notes: AVA drives backward locomotion via cholinergic chemical synapses (Kawano 2011).
+     VA08    ΔV=+0.1390
+     VA07    ΔV=+0.1346
+     DA04    ΔV=+0.1343
+     DA06    ΔV=+0.1333
+     DA05    ΔV=+0.1281
+     DA07    ΔV=+0.1277
+     VA10    ΔV=+0.1266
+     VA06    ΔV=+0.1242
+     VA04    ΔV=+0.1136
+     VA05    ΔV=+0.1108
+     DA03    ΔV=+0.1102
+     VA11    ΔV=+0.1074
+     DA02    ΔV=+0.1033
+     DA01    ΔV=+0.1015
+     VA09    ΔV=+0.1010
+     VA03    ΔV=+0.0958
+     DA08    ΔV=+0.0873
+     VA01    ΔV=+0.0780
+     VA02    ΔV=+0.0729
+     DA09    ΔV=+0.0654
+     VA12    ΔV=+0.0498
+     driven max|V| across whole network = 0.1709
+
+[PASS] AVBL+AVBR → VB/DB (forward command → motor, via gap)  drive=[AVBL,AVBR] (×0.5) → target=[VB01,VB02,VB03,VB04…]  expected ↑  mean ΔV=+0.0511  max|ΔV|=0.0709
+     notes: AVB→VB/DB coupling is overwhelmingly electrical in Cook 2019.
+     DB06    ΔV=+0.0709
+     VB02    ΔV=+0.0667
+     DB04    ΔV=+0.0642
+     DB01    ΔV=+0.0632
+     DB05    ΔV=+0.0630
+     VB04    ΔV=+0.0608
+     VB05    ΔV=+0.0566
+     DB03    ΔV=+0.0555
+     DB07    ΔV=+0.0521
+     VB03    ΔV=+0.0518
+     VB06    ΔV=+0.0501
+     DB02    ΔV=+0.0488
+     VB11    ΔV=+0.0457
+     VB07    ΔV=+0.0414
+     VB08    ΔV=+0.0387
+     VB10    ΔV=+0.0339
+     VB09    ΔV=+0.0299
+     VB01    ΔV=+0.0271
+     driven max|V| across whole network = 0.1893
+
+[PASS] anterior touch (ALM+AVM) → AVD/AVA (backing reflex)  drive=[ALML,ALMR,AVM] (×0.5) → target=[AVDL,AVDR,AVAL,AVAR]  expected ↑  mean ΔV=+0.1314  max|ΔV|=0.1660
+     notes: Anterior touch reflex: ALM/AVM activate AVD/AVA via mixed chem+gap (Chalfie 1985).
+     AVDL    ΔV=+0.1660
+     AVDR    ΔV=+0.1477
+     AVAR    ΔV=+0.1080
+     AVAL    ΔV=+0.1040
+     driven max|V| across whole network = 0.5897
+
+[PASS] AFD → AIY (thermosensory propagation)     drive=[AFDL,AFDR] (×0.5) → target=[AIYL,AIYR]  expected ↑  mean ΔV=+0.2229  max|ΔV|=0.2317
+     notes: AFD→AIY: dominant thermotaxis interneuron downstream of AFD (Mori 1995).
+     AIYL    ΔV=+0.2317
+     AIYR    ΔV=+0.2141
+     driven max|V| across whole network = 0.4328
+

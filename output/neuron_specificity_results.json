@@ -1,0 +1,217 @@
+[
+  {
+    "name": "ASEL \u2192 AIY (chemotaxis upstream)",
+    "driver_neurons": [
+      "ASEL"
+    ],
+    "target_neurons": [
+      "AIYL",
+      "AIYR"
+    ],
+    "expected_sign": 1,
+    "drive_strength": 0.5,
+    "passed": true,
+    "mean_dv": 0.1742819662297171,
+    "max_abs_dv": 0.18537066240366507,
+    "per_target_dv": {
+      "AIYL": 0.18537066240366507,
+      "AIYR": 0.16319327005576909
+    },
+    "baseline_max_abs_v": 3.6138846544740905e-08,
+    "driven_max_abs_v": 0.40053041604938494,
+    "notes": "ASEL is excitatory cholinergic to AIY (Suzuki 2008, Bargmann 2006)."
+  },
+  {
+    "name": "ASER \u2192 AIY/AIB (chemotaxis upstream)",
+    "driver_neurons": [
+      "ASER"
+    ],
+    "target_neurons": [
+      "AIYL",
+      "AIYR",
+      "AIBL",
+      "AIBR"
+    ],
+    "expected_sign": 1,
+    "drive_strength": 0.5,
+    "passed": true,
+    "mean_dv": 0.12909277805067595,
+    "max_abs_dv": 0.16657840033615298,
+    "per_target_dv": {
+      "AIYL": 0.13586884013466438,
+      "AIYR": 0.16657840033615298,
+      "AIBL": 0.10184131217684629,
+      "AIBR": 0.11208255955504019
+    },
+    "baseline_max_abs_v": 3.6138846544740905e-08,
+    "driven_max_abs_v": 0.4285125578161516,
+    "notes": "ASER is excitatory to AIY (and weaker to AIB) per Cook 2019."
+  },
+  {
+    "name": "AVAL+AVAR \u2192 VA/DA (backward command \u2192 cholinergic motor)",
+    "driver_neurons": [
+      "AVAL",
+      "AVAR"
+    ],
+    "target_neurons": [
+      "VA01",
+      "VA02",
+      "VA03",
+      "VA04",
+      "VA05",
+      "VA06",
+      "VA07",
+      "VA08",
+      "VA09",
+      "VA10",
+      "VA11",
+      "VA12",
+      "DA01",
+      "DA02",
+      "DA03",
+      "DA04",
+      "DA05",
+      "DA06",
+      "DA07",
+      "DA08",
+      "DA09"
+    ],
+    "expected_sign": 1,
+    "drive_strength": 0.5,
+    "passed": true,
+    "mean_dv": 0.10689289096087118,
+    "max_abs_dv": 0.13896733194939453,
+    "per_target_dv": {
+      "VA01": 0.0780279002280326,
+      "VA02": 0.07287951701071375,
+      "VA03": 0.09579713033162472,
+      "VA04": 0.11363899261098269,
+      "VA05": 0.11082056059211895,
+      "VA06": 0.12418277223493002,
+      "VA07": 0.1346454636302846,
+      "VA08": 0.13896733194939453,
+      "VA09": 0.10097889049673991,
+      "VA10": 0.12660490243801378,
+      "VA11": 0.10741955206982402,
+      "VA12": 0.04983981926618906,
+      "DA01": 0.10150054757626359,
+      "DA02": 0.10326442214408843,
+      "DA03": 0.11016439461568138,
+      "DA04": 0.13426778426260105,
+      "DA05": 0.1280532592278664,
+      "DA06": 0.13328253360385464,
+      "DA07": 0.12772481419255305,
+      "DA08": 0.0872660663228412,
+      "DA09": 0.06542405537369653
+    },
+    "baseline_max_abs_v": 3.6138846544740905e-08,
+    "driven_max_abs_v": 0.1708673287024414,
+    "notes": "AVA drives backward locomotion via cholinergic chemical synapses (Kawano 2011)."
+  },
+  {
+    "name": "AVBL+AVBR \u2192 VB/DB (forward command \u2192 motor, via gap)",
+    "driver_neurons": [
+      "AVBL",
+      "AVBR"
+    ],
+    "target_neurons": [
+      "VB01",
+      "VB02",
+      "VB03",
+      "VB04",
+      "VB05",
+      "VB06",
+      "VB07",
+      "VB08",
+      "VB09",
+      "VB10",
+      "VB11",
+      "DB01",
+      "DB02",
+      "DB03",
+      "DB04",
+      "DB05",
+      "DB06",
+      "DB07"
+    ],
+    "expected_sign": 1,
+    "drive_strength": 0.5,
+    "passed": true,
+    "mean_dv": 0.05114080243225007,
+    "max_abs_dv": 0.07093042067848404,
+    "per_target_dv": {
+      "VB01": 0.027147122516511652,
+      "VB02": 0.0666659330779109,
+      "VB03": 0.051826284970643406,
+      "VB04": 0.060774363189313244,
+      "VB05": 0.05662934477833014,
+      "VB06": 0.050105484075221016,
+      "VB07": 0.041423040821845225,
+      "VB08": 0.03869399650241505,
+      "VB09": 0.029872987142028327,
+      "VB10": 0.03387568852321198,
+      "VB11": 0.0457423510021086,
+      "DB01": 0.0632360608679254,
+      "DB02": 0.04879837238391616,
+      "DB03": 0.0554783076003398,
+      "DB04": 0.06423247208747827,
+      "DB05": 0.06298898507425592,
+      "DB06": 0.07093042067848404,
+      "DB07": 0.05211322848856212
+    },
+    "baseline_max_abs_v": 3.6138846544740905e-08,
+    "driven_max_abs_v": 0.18925968620199013,
+    "notes": "AVB\u2192VB/DB coupling is overwhelmingly electrical in Cook 2019."
+  },
+  {
+    "name": "anterior touch (ALM+AVM) \u2192 AVD/AVA (backing reflex)",
+    "driver_neurons": [
+      "ALML",
+      "ALMR",
+      "AVM"
+    ],
+    "target_neurons": [
+      "AVDL",
+      "AVDR",
+      "AVAL",
+      "AVAR"
+    ],
+    "expected_sign": 1,
+    "drive_strength": 0.5,
+    "passed": true,
+    "mean_dv": 0.13142838914802105,
+    "max_abs_dv": 0.1660335352129992,
+    "per_target_dv": {
+      "AVDL": 0.1660335352129992,
+      "AVDR": 0.14772449391836415,
+      "AVAL": 0.10395980013507021,
+      "AVAR": 0.1079957273256506
+    },
+    "baseline_max_abs_v": 3.6138846544740905e-08,
+    "driven_max_abs_v": 0.5896612686152929,
+    "notes": "Anterior touch reflex: ALM/AVM activate AVD/AVA via mixed chem+gap (Chalfie 1985)."
+  },
+  {
+    "name": "AFD \u2192 AIY (thermosensory propagation)",
+    "driver_neurons": [
+      "AFDL",
+      "AFDR"
+    ],
+    "target_neurons": [
+      "AIYL",
+      "AIYR"
+    ],
+    "expected_sign": 1,
+    "drive_strength": 0.5,
+    "passed": true,
+    "mean_dv": 0.22292432496010048,
+    "max_abs_dv": 0.23174007621137746,
+    "per_target_dv": {
+      "AIYL": 0.23174007621137746,
+      "AIYR": 0.2141085737088235
+    },
+    "baseline_max_abs_v": 3.6138846544740905e-08,
+    "driven_max_abs_v": 0.43275113212808175,
+    "notes": "AFD\u2192AIY: dominant thermotaxis interneuron downstream of AFD (Mori 1995)."
+  }
+]

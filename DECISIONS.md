@@ -251,3 +251,40 @@ Phase 1 adds a body. The brief also dispositions every Phase 0 question
 - Effects: AC2 substantively *strengthened* by Phase 0.5. The Phase 0
   "AC2 relaxed" caveat in `DECISIONS.md` and `PHASE0_REPORT.md` no
   longer applies under v0.3.
+
+### [2026-05-20 10:55] AC0.5.3 — what "specificity" actually tests on a bare connectome
+
+- Context: the brief lists 5 sample tests ("ASEL responds to rising chemical"
+  etc.) for AC0.5.3, but the *temporal-derivative* properties of ASE/AFD
+  live in the SensoryTranslator (design.md §4.4), not in the connectome.
+  Drawing the right line between "what is testable here" and "what is
+  Phase 1" matters.
+- Choice: AC0.5.3 tests *signal-propagation specificity* — driving the
+  upstream neuron of a literature-documented circuit produces a
+  measurable, correctly-signed response at the documented downstream
+  targets. The derivative encoding of ASEL/ASER is deferred to Phase 1
+  and called out explicitly in the module docstring.
+- Battery (6 tests, exceeding AC's "at least 5"):
+  1. ASEL → AIYL/AIYR (chemotaxis upstream; chem 0.16-0.26)
+  2. ASER → AIYL/AIYR/AIBL/AIBR (lateralized chemotaxis; chem 0.07-0.29)
+  3. AVAL+AVAR → VA01-VA12 + DA01-DA09 (backward command → cholinergic
+     motor; strong chemical)
+  4. AVBL+AVBR → VB01-VB11 + DB01-DB07 (forward command → motor; here
+     the coupling is gap-junctional, not chemical — Cook 2019 has
+     essentially no AVB→VB chem synapses, only gap ≈ 0.1–0.29)
+  5. ALML+ALMR+AVM → AVDL/AVDR/AVAL/AVAR (anterior touch reflex;
+     mixed chem + gap)
+  6. AFDL+AFDR → AIYL/AIYR (thermosensory; strong chem 0.20-0.22)
+- Result: 6/6 pass. mean ΔV ranges 0.05 (AVB→VB/DB, gap-mediated, the
+  weakest) to 0.22 (AFD→AIY, strongest direct chem). All signs match
+  literature.
+- Why this matters: it is a *non-trivial* result that the Cook 2019
+  connectome topology + per-row-L1 normalization + tanh(β=1) dynamics
+  reproduces 6 different documented circuits with correct sign in a
+  fully passive setting. The AVB→VB/DB case in particular relies on
+  gap-junction equalization (since chemical AVB→VB is ≈ 0 in our
+  matrix), confirming the gap-junction Laplacian term is well-tuned.
+- Effects: `src/algos/validation/neuron_specificity.py` is the live
+  battery; `tests/test_neuron_specificity.py` parametrizes it as pytest
+  cases; `scripts/run_neuron_specificity.py` produces text + JSON
+  reports. The artifacts go in `output/`.
