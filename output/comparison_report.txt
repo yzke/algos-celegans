@@ -1,0 +1,49 @@
+AC0.5.2 — Digital vs. real (Atanas 2023) similarity report
+================================================================
+recordings:        6
+sensory neurons:   83
+digital noise σ:   0.1
+runtime:           3.4s
+
+Protocol A — random sensory drive (pure topology baseline):
+  temporal_correlation                        mean=+0.0115  median=-0.0109  range=[-0.0322, +0.0736]
+  functional_connectivity_similarity          mean=+0.0218  median=+0.0130  range=[-0.0337, +0.0942]
+  pca_structure_similarity                    mean=+0.6492  median=+0.6471  range=[+0.6142, +0.6967]
+
+Protocol B — behavior-conditioned drive (AVA in real reversals,
+             AVB otherwise; isolates 'is command drive enough?'):
+  temporal_correlation                        mean=+0.0335  median=+0.0104  range=[-0.0163, +0.1100]
+  functional_connectivity_similarity          mean=+0.0622  median=+0.0693  range=[+0.0123, +0.0852]
+  pca_structure_similarity                    mean=+0.5995  median=+0.5933  range=[+0.5724, +0.6305]
+
+Per-recording details (protocol A then B):
+--- 2022-08-02-01  (labeled=113) ---
+  temporal_correlation                        A=-0.0075   B=-0.0034
+  functional_connectivity_similarity          A=+0.0191   B=+0.0123
+  pca_structure_similarity                    A=+0.6532   B=+0.5924
+
+--- 2023-01-17-14  (labeled=106) ---
+  temporal_correlation                        A=-0.0151   B=+0.0226
+  functional_connectivity_similarity          A=-0.0337   B=+0.0546
+  pca_structure_similarity                    A=+0.6242   B=+0.5724
+
+--- 2023-01-09-15  (labeled=99) ---
+  temporal_correlation                        A=+0.0736   B=+0.1100
+  functional_connectivity_similarity          A=+0.0543   B=+0.0652
+  pca_structure_similarity                    A=+0.6659   B=+0.5943
+
+--- 2023-01-10-07  (labeled=97) ---
+  temporal_correlation                        A=+0.0644   B=+0.0900
+  functional_connectivity_similarity          A=+0.0068   B=+0.0852
+  pca_structure_similarity                    A=+0.6142   B=+0.5882
+
+--- 2023-01-23-15  (labeled=96) ---
+  temporal_correlation                        A=-0.0322   B=-0.0163
+  functional_connectivity_similarity          A=+0.0942   B=+0.0828
+  pca_structure_similarity                    A=+0.6967   B=+0.6305
+
+--- 2022-06-14-13  (labeled=94) ---
+  temporal_correlation                        A=-0.0143   B=-0.0017
+  functional_connectivity_similarity          A=-0.0099   B=+0.0733
+  pca_structure_similarity                    A=+0.6410   B=+0.6190
+

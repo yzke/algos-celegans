@@ -288,3 +288,67 @@ Phase 1 adds a body. The brief also dispositions every Phase 0 question
   battery; `tests/test_neuron_specificity.py` parametrizes it as pytest
   cases; `scripts/run_neuron_specificity.py` produces text + JSON
   reports. The artifacts go in `output/`.
+
+### [2026-05-20 11:20] AC0.5.1 — Atanas 2023 as the reference; processed_h5 downloaded
+
+- Context: brief named "Atanas 2023" as primary, "Kato 2015" as backup.
+  Both are real datasets; need to settle the choice and figure out the
+  exact bits to download.
+- Choice: **Atanas 2023** (published in *Cell*, not eLife as the brief
+  stated — verified via WebSearch). Source of truth:
+  Zenodo deposit `10.5281/zenodo.8150514`, current record `19388374`,
+  with companion code at `github.com/flavell-lab/AtanasKim-Cell2023`.
+- Files used (4 small metadata + 1 large traces; total 543 MB
+  compressed, ~3 GB uncompressed):
+  - `neuropal_label.json.bz2` (16 kB) — per-recording NeuroPAL labels
+  - `neuron_categorization.h5.bz2` (107 kB) — per-behavior neuron tags
+  - `encoding_changes_corrected.h5.bz2` (55 kB) — encoding deltas
+  - `fit_ranges.h5.bz2` (2 kB) — fit metadata
+  - `processed_h5.tar.bz2` (543 MB) → 69 per-recording calcium-trace HDFs
+- Effects: `data/reference/` populated locally; `data/reference/*.bz2`,
+  `*.h5`, `*.json`, and `processed_h5/` added to `.gitignore` so the
+  binary data never enters version control. Loader at
+  `src/algos/validation/reference_data.py` exposes `ReferenceDataset`
+  and per-recording `Recording`. Loading is filtered to recordings
+  with at least one high-confidence NeuroPAL label (`?`-suffixed labels
+  dropped by default) and sorted by label coverage so
+  `max_recordings=N` returns the N best-annotated recordings.
+
+### [2026-05-20 11:35] AC0.5.2 — three metrics + two digital protocols
+
+- Context: brief specifies three metrics (temporal correlation, FC
+  similarity, PCA structure similarity). All three need time traces,
+  which we now have. The non-trivial choice is what *digital* protocol
+  to run against the real data: the bare CTRNN has no body, so there
+  is no canonical "matched" simulation.
+- Choice: run **both** protocols and report both:
+  - **Protocol A — random sensory drive**: every sensory neuron gets
+    independent Gaussian noise (σ=0.1) at every tick. This is the
+    pure-topology baseline — what does the CTRNN do under unstructured
+    drive?
+  - **Protocol B — behavior-conditioned drive**: drive AVA/AVD/AVE
+    (backward command) when the real worm is reversing
+    (`behavior/reversal_vec[t] == 1`) and AVB/PVC (forward) otherwise.
+    This is the "you've got the right command-neuron input — is that
+    enough?" test.
+- Reason: protocol A alone would understate the digital model. Protocol
+  B alone hides the topology-only baseline. Together they decompose the
+  gap into "missing input" and "missing topology", and the difference
+  between the two scores tells us which Phase 1 investment matters
+  most.
+- Effects: results on 6 best-labeled recordings:
+  - PCA structure similarity ≈ 0.65 (A) / 0.60 (B). The connectome's
+    intrinsic low-dim activity manifold is genuinely close to the real
+    worm's — a substantive positive finding.
+  - Functional connectivity similarity ≈ +0.02 (A) → +0.06 (B).
+    Behavior-conditioning ~3× improves FC matching but absolute values
+    stay near zero. The connectome topology does **not** reproduce
+    the real FC structure by itself.
+  - Temporal correlation ≈ +0.01 (A) → +0.03 (B). Always near zero —
+    expected given the bare CTRNN has no body and no shared sensory
+    history.
+- Implication for Phase 1: the gap is **not** mostly explained by
+  missing command-drive. Phase 1's body+sensory translator is necessary
+  but probably not sufficient; modulators (Phase 3) and/or plasticity
+  (Phase 4) are likely needed before FC similarity climbs into a
+  biologically meaningful range. Recorded for the Phase 0.5 report.

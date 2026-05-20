@@ -11,5 +11,13 @@ dist/
 # Caches / generated artifacts
 data/connectome/*.npz
 
+# Reference electrophysiology data (Atanas 2023 etc.).
+# Downloaded by data/reference/README.md instructions; never commit binaries.
+data/reference/*.bz2
+data/reference/*.tar
+data/reference/*.h5
+data/reference/*.json
+data/reference/processed_h5/
+
 # Session logs (cc_prompt etc.) — not part of the codebase
 logs/
