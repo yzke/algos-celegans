@@ -544,3 +544,68 @@ level. 0.8.1 is the foundation; 0.8.2/0.8.3 build on it.
   (b) Phase 1 body + Phase 3 modulators.
 - 0.8.3 attempts (a) with synthetic step functions; the comparison
   to 0.8.2 will tell us how much (a) alone can do.
+
+---
+
+## [Phase 0.8.3]
+
+### [2026-05-20 14:15] Four specialized step functions, 14 neurons assigned
+
+- Context: brief listed 5 key-neuron classes (ASE, AFD, AVA/AVD,
+  AVB/PVC, RIM). My implementation:
+  - `change_detector` (ASEL polarity=+1, ASER polarity=−1) —
+    `tanh(polarity·gain·(input − V))` integrated with τ; "responds to
+    input/state mismatch", a derivative proxy.
+  - `setpoint_deviation` (AFDL polarity=+1, AFDR polarity=−1) —
+    `tanh(gain·polarity·(input − setpoint))`. Setpoint=0 because we
+    have no body / cultivation temperature.
+  - `threshold_accumulator` (AVAL/AVAR/AVDL/AVDR, AVBL/AVBR/PVCL/PVCR) —
+    leaky integrator + soft latch (`+persistence` once V > threshold).
+  - `bistable_switch` (RIML/RIMR) — adds `self_gain · tanh(3·V)` to
+    drive; pushes toward ±1 attractor.
+- Choice: stay within the brief's "simple math, not biological
+  precision" guidance. Each function captures one computational
+  property reported in the literature for that neuron class.
+- Effects: 14 neurons specialized; 8 step functions total in
+  `STEP_LIBRARY`. Performance still 0.094 ms/tick.
+
+### [2026-05-20 14:25] Honest finding — 0.8.3 does NOT help over 0.8.2
+
+- Context: comparison on 10 best-labeled recordings, three configs
+  (homogeneous = Phase 0.7 equivalent, category = 0.8.2,
+  key_neuron = 0.8.3), stable seeds.
+- Result (mean digital-vs-real scores, n=10):
+  - subspace_alignment:    hom +0.394, cat +0.353, key +0.349
+  - temporal_correlation:  hom −0.003, cat −0.014, key −0.016
+  - **fc_similarity:       hom +0.017, cat +0.061, key +0.044**
+- The category heterogeneity (0.8.2) improves fc_similarity by +0.044
+  over homogeneous — a 26% reduction of the +0.45 Phase 0.7 gap.
+- The per-neuron specialization (0.8.3) **regresses** fc_similarity by
+  −0.016 vs the category baseline. All three configs still at the
+  0th percentile of the cross-worm distribution.
+- Why: the synthetic step functions need supporting infrastructure
+  that the bare network does not have:
+  - change_detector needs time-correlated sensory input → Phase 1.
+  - threshold_accumulator needs the network to actually drive AVA past
+    threshold at the right moments → Phase 1 + Phase 3.
+  - bistable_switch picks an attractor on initial-condition noise →
+    needs Phase 3 modulators to gate the choice biologically.
+- Recommendation kept in the report: adopt category-default
+  heterogeneity (0.8.2) in Phase 1+. Defer per-neuron specialization
+  until body and modulators are in place.
+
+### [2026-05-20 14:30] PYTHONHASHSEED issue surfaced
+
+- Context: while debugging the 0.8.2 vs 0.8.3 number drift, discovered
+  that Phase 0.5/0.7/0.8.2's `hash(recording_id)` is per-process
+  randomized in Python — different runs produce different seeds.
+- Choice: 0.8.3 comparison script uses `1000 + enumerate_index` as
+  seed, which is stable across runs. Did not retrofit older scripts —
+  the older committed numbers are still meaningful (they're a single
+  realization from the random seed distribution; the qualitative
+  conclusions are robust to seed choice).
+- Effect: 0.8.3's `homogeneous` baseline reports +0.017 fc_similarity,
+  while Phase 0.7's run reported +0.026 for an equivalent setup. Both
+  numbers are correct; the difference is RNG seed.
+- Lesson: any future "reproduce X" claim must specify the seed.
+  Going forward, all phases should use stable seeds.

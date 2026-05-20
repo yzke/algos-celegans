@@ -86,6 +86,206 @@ register_step_function("slow_persistent", slow_persistent)
 
 
 # ---------------------------------------------------------------------------
+# Phase 0.8.3 — specialized step functions for known key neurons
+# ---------------------------------------------------------------------------
+#
+# These are *minimal mathematical sketches*, not biologically-faithful
+# models. Each captures one computational property reported in the C.
+# elegans literature for the relevant neuron class:
+#
+#   - change_detector (ASE)         — respond to input derivative
+#   - setpoint_deviation (AFD)      — respond to |input − setpoint|
+#   - threshold_accumulator (AVA)   — integrate; latch above threshold
+#   - bistable_switch (RIM)         — push toward ±1 attractor
+#
+# Per-neuron params (polarity, setpoint, gain, threshold, persistence,
+# self_gain) are stored as length-N ndarrays in HeterogeneousNetwork's
+# `function_params`. Other step functions ignore these extra keys.
+
+
+def change_detector(V_current, total_input, V_history, params):
+    """Respond to mismatch between input and current state — derivative-like.
+
+    The signal `polarity · (total_input − V_current)` is large when the
+    input is changing relative to what V has caught up to. Saturated by
+    tanh and integrated with `tau`. Used for ASE pair:
+      - ASEL: polarity = +1 (responds to rising drive)
+      - ASER: polarity = −1 (responds to falling drive)
+    """
+    gain = params.get("gain", np.ones_like(V_current) * 5.0)
+    polarity = params["polarity"]
+    signal = polarity * (total_input - V_current) * gain
+    target = np.tanh(signal)
+    dV = (target - V_current) / params["tau"]
+    return np.clip(V_current + dV, -1.0, 1.0)
+
+
+def setpoint_deviation(V_current, total_input, V_history, params):
+    """Respond to deviation from a setpoint (AFD pair).
+
+    Target = tanh(gain · polarity · (input − setpoint)). Used for AFD,
+    where the "setpoint" is the cultivation temperature. In the bare
+    network we set the setpoint to 0 so it functions as a signed
+    deviation detector.
+    """
+    setpoint = params["setpoint"]
+    polarity = params["polarity"]
+    gain = params.get("gain", np.ones_like(V_current) * 5.0)
+    target = np.tanh(gain * polarity * (total_input - setpoint))
+    dV = (target - V_current) / params["tau"]
+    return np.clip(V_current + dV, -1.0, 1.0)
+
+
+def threshold_accumulator(V_current, total_input, V_history, params):
+    """Leaky integrator with a soft latch above a threshold (AVA/AVD/AVB).
+
+    Once V_current exceeds `threshold`, a positive `persistence` term is
+    added to the drive that keeps V elevated. Below threshold the unit
+    behaves like a CTRNN. This produces "command-neuron-like" behavior:
+    inputs accumulate, threshold crossing produces a persistent active
+    state.
+    """
+    threshold = params["threshold"]
+    persistence = params["persistence"]
+    latched = (V_current > threshold).astype(np.float64) * persistence
+    dV = (-V_current + total_input + latched) / params["tau"]
+    return np.clip(V_current + dV, -1.0, 1.0)
+
+
+def bistable_switch(V_current, total_input, V_history, params):
+    """Bistable unit with attractors near ±1 (RIM).
+
+    Adds a self-amplifying term `self_gain · tanh(3·V_current)` to the
+    drive, biasing V toward whichever sign it's currently in. Strong
+    input can flip the state; weak input lets the unit stay in its
+    current attractor.
+    """
+    self_gain = params["self_gain"]
+    drive = total_input + self_gain * np.tanh(3.0 * V_current)
+    dV = (-V_current + drive) / params["tau"]
+    return np.clip(V_current + dV, -1.0, 1.0)
+
+
+register_step_function("change_detector", change_detector)
+register_step_function("setpoint_deviation", setpoint_deviation)
+register_step_function("threshold_accumulator", threshold_accumulator)
+register_step_function("bistable_switch", bistable_switch)
+
+
+# ---------------------------------------------------------------------------
+# Key-neuron specialization factory
+# ---------------------------------------------------------------------------
+
+
+# Per-neuron specialization table. Keys: neuron name. Value: (function_name,
+# params dict). Params are merged into the network's length-N arrays at
+# the neuron's index.
+KEY_NEURON_SPECIALIZATIONS: dict[str, tuple[str, dict[str, float]]] = {
+    # ASE pair — chemosensory, derivative-like response.
+    "ASEL": ("change_detector",      {"tau":  8.0, "polarity": +1.0, "gain": 5.0}),
+    "ASER": ("change_detector",      {"tau":  8.0, "polarity": -1.0, "gain": 5.0}),
+    # AFD pair — thermosensory setpoint deviation.
+    "AFDL": ("setpoint_deviation",   {"tau":  8.0, "polarity": +1.0,
+                                       "setpoint": 0.0, "gain": 5.0}),
+    "AFDR": ("setpoint_deviation",   {"tau":  8.0, "polarity": -1.0,
+                                       "setpoint": 0.0, "gain": 5.0}),
+    # Backward command pool — threshold accumulator with persistence.
+    "AVAL": ("threshold_accumulator", {"tau": 25.0, "threshold": 0.20,
+                                        "persistence": 0.30}),
+    "AVAR": ("threshold_accumulator", {"tau": 25.0, "threshold": 0.20,
+                                        "persistence": 0.30}),
+    "AVDL": ("threshold_accumulator", {"tau": 25.0, "threshold": 0.15,
+                                        "persistence": 0.25}),
+    "AVDR": ("threshold_accumulator", {"tau": 25.0, "threshold": 0.15,
+                                        "persistence": 0.25}),
+    # Forward command pool.
+    "AVBL": ("threshold_accumulator", {"tau": 25.0, "threshold": 0.20,
+                                        "persistence": 0.30}),
+    "AVBR": ("threshold_accumulator", {"tau": 25.0, "threshold": 0.20,
+                                        "persistence": 0.30}),
+    "PVCL": ("threshold_accumulator", {"tau": 25.0, "threshold": 0.15,
+                                        "persistence": 0.25}),
+    "PVCR": ("threshold_accumulator", {"tau": 25.0, "threshold": 0.15,
+                                        "persistence": 0.25}),
+    # RIM — bistable state switch.
+    "RIML": ("bistable_switch",      {"tau": 20.0, "self_gain": 0.40}),
+    "RIMR": ("bistable_switch",      {"tau": 20.0, "self_gain": 0.40}),
+}
+
+
+def from_key_neuron_specialization(
+    connectome: ConnectomeData,
+    *,
+    base_category_assignment: dict | None = None,
+    specializations: dict[str, tuple[str, dict[str, float]]] | None = None,
+) -> HeterogeneousNetwork:
+    """Build a network using category defaults + per-neuron overrides.
+
+    Starts with `from_category_defaults` and overrides the assignment +
+    params for any neuron in `specializations` (default =
+    `KEY_NEURON_SPECIALIZATIONS`).
+    """
+    if specializations is None:
+        specializations = KEY_NEURON_SPECIALIZATIONS
+
+    # Begin with the category-default network, then mutate its lists/arrays.
+    base = from_category_defaults(
+        connectome, category_assignment=base_category_assignment
+    )
+    n = connectome.n_neurons
+    assignment = list(base.function_assignment)
+    params: dict[str, np.ndarray] = {
+        k: arr.copy() for k, arr in base.function_params.items()
+    }
+
+    # Initialize new param keys to default values (length-N ndarrays).
+    extra_param_defaults = {
+        "polarity": 1.0,
+        "setpoint": 0.0,
+        "gain": 5.0,
+        "threshold": 0.2,
+        "persistence": 0.3,
+        "self_gain": 0.4,
+    }
+    for key, default in extra_param_defaults.items():
+        if key not in params:
+            params[key] = np.full(n, default, dtype=np.float64)
+
+    # Apply each specialization.
+    for neuron_name, (func_name, p) in specializations.items():
+        if neuron_name not in connectome.neuron_to_idx:
+            continue  # Silently skip neurons absent from this connectome.
+        idx = connectome.idx(neuron_name)
+        assignment[idx] = func_name
+        for key, val in p.items():
+            if key not in params:
+                params[key] = np.full(n, val, dtype=np.float64)
+            else:
+                params[key][idx] = val
+
+    return HeterogeneousNetwork(
+        connectome=connectome,
+        function_assignment=assignment,
+        function_params=params,
+    )
+
+
+__all__ = [
+    "fast_filter",
+    "integrator",
+    "slow_persistent",
+    "change_detector",
+    "setpoint_deviation",
+    "threshold_accumulator",
+    "bistable_switch",
+    "DEFAULT_CATEGORY_ASSIGNMENT",
+    "KEY_NEURON_SPECIALIZATIONS",
+    "from_category_defaults",
+    "from_key_neuron_specialization",
+]
+
+
+# ---------------------------------------------------------------------------
 # Category → step function defaults
 # ---------------------------------------------------------------------------
 

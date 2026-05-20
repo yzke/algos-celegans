@@ -23,10 +23,16 @@ from algos.neural.state import NeuralState
 from algos.neural import step_library as _step_library  # noqa: F401
 from algos.neural.step_library import (
     DEFAULT_CATEGORY_ASSIGNMENT,
+    KEY_NEURON_SPECIALIZATIONS,
+    bistable_switch,
+    change_detector,
     fast_filter,
     from_category_defaults,
+    from_key_neuron_specialization,
     integrator,
+    setpoint_deviation,
     slow_persistent,
+    threshold_accumulator,
 )
 
 __all__ = [
@@ -43,6 +49,12 @@ __all__ = [
     "fast_filter",
     "integrator",
     "slow_persistent",
+    "change_detector",
+    "setpoint_deviation",
+    "threshold_accumulator",
+    "bistable_switch",
     "DEFAULT_CATEGORY_ASSIGNMENT",
+    "KEY_NEURON_SPECIALIZATIONS",
     "from_category_defaults",
+    "from_key_neuron_specialization",
 ]
