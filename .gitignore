@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.venv/
+.ipynb_checkpoints/
+build/
+dist/
+
+# Caches / generated artifacts
+data/connectome/*.npz
+
+# Session logs (cc_prompt etc.) — not part of the codebase
+logs/
