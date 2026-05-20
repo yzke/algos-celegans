@@ -1,0 +1,68 @@
+Phase 0.8.2 — homogeneous vs category-heterogeneous
+==============================================================================
+recordings:  10
+runtime:     11.1s
+
+Mean digital-vs-real score (n=10 recordings):
+  metric                             homogeneous    heterogeneous      delta
+  subspace_alignment                     +0.3978          +0.3601    -0.0377
+  temporal_correlation                   -0.0066          +0.0041    +0.0107
+  fc_similarity                          +0.0264          +0.0586    +0.0322
+
+Where they sit in the cross-worm distribution:
+  metric                          cross-worm  hom%   het%
+  subspace_alignment              mean=+0.593, p5=+0.537           0.0%   0.0%
+  temporal_correlation            mean=+0.122, p5=+0.049           0.0%   0.0%
+  fc_similarity                   mean=+0.478, p5=+0.348           0.0%   0.0%
+
+Per-recording detail (digital_vs_real for each metric):
+--- 2022-08-02-01 (labeled=113) ---
+  subspace_alignment              hom=+0.3822   het=+0.3439   Δ=-0.0383
+  temporal_correlation            hom=+0.0398   het=+0.0375   Δ=-0.0023
+  fc_similarity                   hom=+0.0206   het=+0.0348   Δ=+0.0142
+
+--- 2023-01-17-14 (labeled=106) ---
+  subspace_alignment              hom=+0.3979   het=+0.3521   Δ=-0.0458
+  temporal_correlation            hom=+0.0018   het=-0.0066   Δ=-0.0084
+  fc_similarity                   hom=+0.0015   het=+0.0316   Δ=+0.0300
+
+--- 2023-01-09-15 (labeled=99) ---
+  subspace_alignment              hom=+0.4068   het=+0.3692   Δ=-0.0376
+  temporal_correlation            hom=-0.0639   het=-0.0015   Δ=+0.0623
+  fc_similarity                   hom=+0.0307   het=+0.0135   Δ=-0.0173
+
+--- 2023-01-10-07 (labeled=97) ---
+  subspace_alignment              hom=+0.3862   het=+0.3667   Δ=-0.0196
+  temporal_correlation            hom=+0.0313   het=-0.0425   Δ=-0.0738
+  fc_similarity                   hom=+0.0285   het=+0.1239   Δ=+0.0953
+
+--- 2023-01-23-15 (labeled=96) ---
+  subspace_alignment              hom=+0.4154   het=+0.3659   Δ=-0.0495
+  temporal_correlation            hom=+0.0421   het=-0.0067   Δ=-0.0488
+  fc_similarity                   hom=+0.0571   het=+0.1235   Δ=+0.0663
+
+--- 2022-06-14-13 (labeled=94) ---
+  subspace_alignment              hom=+0.4085   het=+0.3668   Δ=-0.0417
+  temporal_correlation            hom=-0.0461   het=-0.0101   Δ=+0.0360
+  fc_similarity                   hom=-0.0046   het=+0.0588   Δ=+0.0634
+
+--- 2022-07-20-01 (labeled=94) ---
+  subspace_alignment              hom=+0.3789   het=+0.3571   Δ=-0.0218
+  temporal_correlation            hom=+0.0560   het=+0.0596   Δ=+0.0036
+  fc_similarity                   hom=+0.0188   het=+0.0602   Δ=+0.0413
+
+--- 2023-01-09-22 (labeled=94) ---
+  subspace_alignment              hom=+0.3968   het=+0.3539   Δ=-0.0430
+  temporal_correlation            hom=-0.0022   het=+0.0250   Δ=+0.0272
+  fc_similarity                   hom=+0.0055   het=+0.0183   Δ=+0.0128
+
+--- 2023-01-23-21 (labeled=94) ---
+  subspace_alignment              hom=+0.3840   het=+0.3714   Δ=-0.0126
+  temporal_correlation            hom=-0.0545   het=-0.0013   Δ=+0.0532
+  fc_similarity                   hom=+0.0257   het=+0.0231   Δ=-0.0026
+
+--- 2023-01-09-28 (labeled=92) ---
+  subspace_alignment              hom=+0.4216   het=+0.3543   Δ=-0.0673
+  temporal_correlation            hom=-0.0707   het=-0.0124   Δ=+0.0584
+  fc_similarity                   hom=+0.0803   het=+0.0986   Δ=+0.0182
+

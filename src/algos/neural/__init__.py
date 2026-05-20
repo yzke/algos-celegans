@@ -19,6 +19,15 @@ from algos.neural.heterogeneous import (
     register_step_function,
 )
 from algos.neural.state import NeuralState
+# Side-effect import: registers Phase 0.8.2 step functions into STEP_LIBRARY.
+from algos.neural import step_library as _step_library  # noqa: F401
+from algos.neural.step_library import (
+    DEFAULT_CATEGORY_ASSIGNMENT,
+    fast_filter,
+    from_category_defaults,
+    integrator,
+    slow_persistent,
+)
 
 __all__ = [
     "CTRNNParams",
@@ -31,4 +40,9 @@ __all__ = [
     "StepFunction",
     "ctrnn_default",
     "register_step_function",
+    "fast_filter",
+    "integrator",
+    "slow_persistent",
+    "DEFAULT_CATEGORY_ASSIGNMENT",
+    "from_category_defaults",
 ]

@@ -137,3 +137,40 @@ def test_unknown_function_rejected(connectome):
             function_assignment=["nonexistent_function"] * n,
             function_params={"tau": np.full(n, 10.0)},
         )
+
+
+def test_category_defaults_factory_assigns_correctly(connectome):
+    """from_category_defaults assigns the right function per category."""
+    from algos.neural import from_category_defaults, DEFAULT_CATEGORY_ASSIGNMENT
+
+    net = from_category_defaults(connectome)
+    for i, name in enumerate(net.function_assignment):
+        cat = connectome.category[i]
+        expected_func, expected_params = DEFAULT_CATEGORY_ASSIGNMENT.get(
+            cat, ("ctrnn_default", {"tau": 10.0, "beta": 1.0})
+        )
+        assert name == expected_func, (
+            f"neuron {i} ({connectome.neuron_names[i]}, cat={cat}): "
+            f"expected {expected_func}, got {name}"
+        )
+        assert net.function_params["tau"][i] == expected_params["tau"], (
+            f"neuron {i}: tau mismatch"
+        )
+
+
+def test_category_default_network_runs_stably(connectome):
+    """Category-default network runs 2000 ticks without NaN/Inf."""
+    from algos.neural import from_category_defaults
+
+    net = from_category_defaults(connectome)
+    state = net.initial_state(seed=42)
+    rng = np.random.default_rng(42)
+    sens = np.zeros(connectome.n_neurons)
+    for t in range(2000):
+        sens[:] = 0.0
+        sens[connectome.get_neuron_indices_by_category("sensory")] = (
+            rng.standard_normal(83) * 0.05
+        )
+        state = net.step(state, sens, rng)
+    assert np.all(np.isfinite(state.V))
+    assert np.max(np.abs(state.V)) <= 1.0 + 1e-12

@@ -484,3 +484,63 @@ level. 0.8.1 is the foundation; 0.8.2/0.8.3 build on it.
 - No bottleneck identified. If a future phase needs >50 step-function
   groups (unlikely), the dispatch loop is the next optimization
   target.
+
+---
+
+## [Phase 0.8.2]
+
+### [2026-05-20 13:40] Three category-default step functions
+
+- Context: 0.8.1 built the architecture; 0.8.2 wants three step
+  functions and a category-based assignment. The brief lists names
+  (fast_filter / integrator / slow_persistent) and parameter targets
+  (τ = 5 / 20 / 50, β = 5 / — / —).
+- Choice: implement them as structurally distinct, not just tau
+  variants of ctrnn_default:
+  - `fast_filter`: V relaxes toward a *saturated target* `tanh(β·input)`,
+    so the unit clamps fast inputs at ±1.
+  - `integrator`: the standard CTRNN form `dV = (−V+input)/τ`. Named
+    separately to be dispatched explicitly (functionally identical
+    to ctrnn_default with the same τ, but the explicit name makes
+    debugging easier).
+  - `slow_persistent`: ctrnn + momentum term `0.2·(V[t−1] − V[t−2])`,
+    which reads from the V_history buffer 0.8.1 introduced. Carries
+    motor commands forward.
+- Reason: the brief said "新函数" (new functions), not "新参数"
+  (new parameters), so they should be computationally distinct.
+- Effects: 4 step functions in `STEP_LIBRARY`; `from_category_defaults`
+  factory in `step_library.py`; `tests/test_heterogeneous.py` extended
+  with factory-correctness and long-run-stability tests; total 32 pass.
+
+### [2026-05-20 13:50] FC ↑ +0.032; subspace_alignment ↓ −0.038
+
+- Context: rerun Phase 0.7's three metrics on 10 best-labeled
+  recordings, with the heterogeneous category-default network vs
+  the homogeneous ctrnn_default network.
+- Result (means across 10 recordings):
+  - fc_similarity:        +0.026 → +0.059  (Δ +0.032)
+  - temporal_correlation: −0.007 → +0.004  (Δ +0.011)
+  - subspace_alignment:   +0.398 → +0.360  (Δ −0.038)
+- Reading: fc_similarity is the load-bearing gap Phase 0.7 / 0.8
+  diagnostic identified. A +0.032 movement is a ~7% reduction of
+  the original +0.45 gap. Notable but not enough to enter the
+  real-worm distribution (cross-worm p5 = +0.348; digital still at
+  +0.059 = 0th percentile).
+- The subspace_alignment regression is the cost: fast_filter's
+  strong saturation at ±1 flattens the top-K eigenvalue spectrum
+  slightly, lowering the alignment metric. This is a trade-off, not
+  a bug.
+- No tuning of the category parameters was done after the first
+  result — the brief's specified values are kept verbatim. Phase 0.8.3
+  has the opportunity to override specific neurons.
+
+### [2026-05-20 13:55] What's not yet inside the real distribution
+
+- Even the heterogeneous network sits at the 0th percentile of the
+  Phase 0.7 cross-worm distribution on all three metrics. Closing the
+  remaining gap to entry (still +0.29 on fc_similarity) requires
+  either (a) per-neuron specialization for the high-leverage neurons
+  identified in Phase 0.8 diagnostic (RID, AVA, AVB, ASE, AFD), or
+  (b) Phase 1 body + Phase 3 modulators.
+- 0.8.3 attempts (a) with synthetic step functions; the comparison
+  to 0.8.2 will tell us how much (a) alone can do.

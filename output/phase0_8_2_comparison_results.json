@@ -1,0 +1,222 @@
+{
+  "settings": {
+    "n_worms": 10,
+    "pre_eq_ticks": 2000,
+    "sensory_noise": 0.1
+  },
+  "summary": {
+    "homogeneous": {
+      "subspace_alignment": {
+        "mean": 0.397818255890123,
+        "std": 0.014123995700615009,
+        "percentile_in_cross_worm": 0.0,
+        "cross_worm_mean": 0.5926068108154326,
+        "cross_worm_p5": 0.5374989828250739
+      },
+      "temporal_correlation": {
+        "mean": -0.006632644474920691,
+        "std": 0.046065025078468484,
+        "percentile_in_cross_worm": 0.0,
+        "cross_worm_mean": 0.121582293914144,
+        "cross_worm_p5": 0.049438051238306
+      },
+      "fc_similarity": {
+        "mean": 0.02644008888987055,
+        "std": 0.024462608652783213,
+        "percentile_in_cross_worm": 0.0,
+        "cross_worm_mean": 0.4781935245133802,
+        "cross_worm_p5": 0.3479550579386062
+      }
+    },
+    "heterogeneous": {
+      "subspace_alignment": {
+        "mean": 0.3601153256618447,
+        "std": 0.008607254947914193,
+        "percentile_in_cross_worm": 0.0,
+        "cross_worm_mean": 0.5926068108154326,
+        "cross_worm_p5": 0.5374989828250739
+      },
+      "temporal_correlation": {
+        "mean": 0.004108460981073441,
+        "std": 0.027510549731917428,
+        "percentile_in_cross_worm": 0.0,
+        "cross_worm_mean": 0.121582293914144,
+        "cross_worm_p5": 0.049438051238306
+      },
+      "fc_similarity": {
+        "mean": 0.058614861898388104,
+        "std": 0.04035243216776703,
+        "percentile_in_cross_worm": 0.0,
+        "cross_worm_mean": 0.4781935245133802,
+        "cross_worm_p5": 0.3479550579386062
+      }
+    }
+  },
+  "per_recording": {
+    "homogeneous": [
+      {
+        "subspace_alignment": 0.3821851340809498,
+        "temporal_correlation": 0.03975316966110723,
+        "fc_similarity": 0.020646813874813777,
+        "recording_id": "2022-08-02-01",
+        "digital_max_abs_V": 0.09008735418319702,
+        "digital_mean_abs_V": 0.007041058503091335
+      },
+      {
+        "subspace_alignment": 0.3979182849659871,
+        "temporal_correlation": 0.0018217301193022123,
+        "fc_similarity": 0.0015357949038979773,
+        "recording_id": "2023-01-17-14",
+        "digital_max_abs_V": 0.08891420066356659,
+        "digital_mean_abs_V": 0.006762370932847261
+      },
+      {
+        "subspace_alignment": 0.40679004156910314,
+        "temporal_correlation": -0.06387000367168343,
+        "fc_similarity": 0.030745911383812077,
+        "recording_id": "2023-01-09-15",
+        "digital_max_abs_V": 0.11597272008657455,
+        "digital_mean_abs_V": 0.007781193591654301
+      },
+      {
+        "subspace_alignment": 0.38624056463176937,
+        "temporal_correlation": 0.03130226629590831,
+        "fc_similarity": 0.028529501892714616,
+        "recording_id": "2023-01-10-07",
+        "digital_max_abs_V": 0.10317713022232056,
+        "digital_mean_abs_V": 0.00790259800851345
+      },
+      {
+        "subspace_alignment": 0.41536708503936015,
+        "temporal_correlation": 0.042121066987905374,
+        "fc_similarity": 0.0571383650942197,
+        "recording_id": "2023-01-23-15",
+        "digital_max_abs_V": 0.09661151468753815,
+        "digital_mean_abs_V": 0.008162032812833786
+      },
+      {
+        "subspace_alignment": 0.4084528996449365,
+        "temporal_correlation": -0.04614270456799613,
+        "fc_similarity": -0.004562310514128016,
+        "recording_id": "2022-06-14-13",
+        "digital_max_abs_V": 0.08985105901956558,
+        "digital_mean_abs_V": 0.008315539918839931
+      },
+      {
+        "subspace_alignment": 0.3788591011742589,
+        "temporal_correlation": 0.05604003599174104,
+        "fc_similarity": 0.01881578848794765,
+        "recording_id": "2022-07-20-01",
+        "digital_max_abs_V": 0.08676844090223312,
+        "digital_mean_abs_V": 0.007115833926945925
+      },
+      {
+        "subspace_alignment": 0.3968178661439099,
+        "temporal_correlation": -0.0021622352223301428,
+        "fc_similarity": 0.005464791325577434,
+        "recording_id": "2023-01-09-22",
+        "digital_max_abs_V": 0.10529332607984543,
+        "digital_mean_abs_V": 0.007316217757761478
+      },
+      {
+        "subspace_alignment": 0.38399720615710686,
+        "temporal_correlation": -0.0544644185292206,
+        "fc_similarity": 0.025744467443581217,
+        "recording_id": "2023-01-23-21",
+        "digital_max_abs_V": 0.0931946262717247,
+        "digital_mean_abs_V": 0.006856999825686216
+      },
+      {
+        "subspace_alignment": 0.42155437549384767,
+        "temporal_correlation": -0.07072535181394078,
+        "fc_similarity": 0.08034176500626905,
+        "recording_id": "2023-01-09-28",
+        "digital_max_abs_V": 0.09673888981342316,
+        "digital_mean_abs_V": 0.007329008542001247
+      }
+    ],
+    "heterogeneous": [
+      {
+        "subspace_alignment": 0.34388409597453384,
+        "temporal_correlation": 0.037452163130634826,
+        "fc_similarity": 0.03482157954936665,
+        "recording_id": "2022-08-02-01",
+        "digital_max_abs_V": 0.9992465972900391,
+        "digital_mean_abs_V": 0.6648738384246826
+      },
+      {
+        "subspace_alignment": 0.35209493797743985,
+        "temporal_correlation": -0.006563611702457542,
+        "fc_similarity": 0.03157009873265256,
+        "recording_id": "2023-01-17-14",
+        "digital_max_abs_V": 0.9991694092750549,
+        "digital_mean_abs_V": 0.6649585366249084
+      },
+      {
+        "subspace_alignment": 0.3692080997585705,
+        "temporal_correlation": -0.001545802112162719,
+        "fc_similarity": 0.013476999910757908,
+        "recording_id": "2023-01-09-15",
+        "digital_max_abs_V": 0.9991687536239624,
+        "digital_mean_abs_V": 0.6648150682449341
+      },
+      {
+        "subspace_alignment": 0.36665332153417557,
+        "temporal_correlation": -0.042491834784146545,
+        "fc_similarity": 0.12386925366933936,
+        "recording_id": "2023-01-10-07",
+        "digital_max_abs_V": 0.9991693496704102,
+        "digital_mean_abs_V": 0.6648925542831421
+      },
+      {
+        "subspace_alignment": 0.3658836183662412,
+        "temporal_correlation": -0.006667520035544608,
+        "fc_similarity": 0.12346601345690411,
+        "recording_id": "2023-01-23-15",
+        "digital_max_abs_V": 0.9991787075996399,
+        "digital_mean_abs_V": 0.6649454236030579
+      },
+      {
+        "subspace_alignment": 0.36677288145470166,
+        "temporal_correlation": -0.01011368433787836,
+        "fc_similarity": 0.05881464069973093,
+        "recording_id": "2022-06-14-13",
+        "digital_max_abs_V": 0.9990689158439636,
+        "digital_mean_abs_V": 0.6648089289665222
+      },
+      {
+        "subspace_alignment": 0.3570812757339018,
+        "temporal_correlation": 0.059645645902579036,
+        "fc_similarity": 0.06016455995708524,
+        "recording_id": "2022-07-20-01",
+        "digital_max_abs_V": 0.9991618990898132,
+        "digital_mean_abs_V": 0.6648789048194885
+      },
+      {
+        "subspace_alignment": 0.35385149967288715,
+        "temporal_correlation": 0.024992515282539884,
+        "fc_similarity": 0.018271596091938628,
+        "recording_id": "2023-01-09-22",
+        "digital_max_abs_V": 0.9991884827613831,
+        "digital_mean_abs_V": 0.6649208664894104
+      },
+      {
+        "subspace_alignment": 0.371421025572252,
+        "temporal_correlation": -0.0012601005438026788,
+        "fc_similarity": 0.023134677009514524,
+        "recording_id": "2023-01-23-21",
+        "digital_max_abs_V": 0.9991390109062195,
+        "digital_mean_abs_V": 0.664961040019989
+      },
+      {
+        "subspace_alignment": 0.35430250057374296,
+        "temporal_correlation": -0.012363160989026895,
+        "fc_similarity": 0.09855919990659114,
+        "recording_id": "2023-01-09-28",
+        "digital_max_abs_V": 0.9993501901626587,
+        "digital_mean_abs_V": 0.6649338603019714
+      }
+    ]
+  },
+  "runtime_sec": 11.101337671279907
+}
