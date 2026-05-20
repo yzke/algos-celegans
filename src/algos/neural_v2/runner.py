@@ -29,6 +29,8 @@ import numpy as np
 
 from algos.graph import NeuralGraph
 from algos.neural_v2.dynamics import LIFParams, lif_step
+from algos.neural_v2.modulators import ModulatorBank
+from algos.neural_v2.plasticity import HebbianRule
 from algos.neural_v2.propagation import (
     DelayBucket,
     SignalQueue,
@@ -54,7 +56,16 @@ class SimulatorConfig:
 
 @dataclass
 class GraphSimulator:
-    """Stateful runner: graph + cached matrices + queue + per-neuron params."""
+    """Stateful runner: graph + cached matrices + queue + per-neuron params.
+
+    Phase 1.0.4 additions:
+      - ``plasticity``  optional HebbianRule; if attached, it ticks every
+                        frame on the rate trace and rewrites the chemical
+                        matrix at ``plasticity_refresh_interval`` ticks.
+      - ``modulators``  optional ModulatorBank; if attached, concentrations
+                        advance every frame and the LIFParams threshold
+                        array is rewritten in place.
+    """
 
     graph: NeuralGraph
     config: SimulatorConfig = field(default_factory=SimulatorConfig)
@@ -67,6 +78,10 @@ class GraphSimulator:
     params: LIFParams = field(init=False)
     sensory_idx: np.ndarray = field(init=False)
     rate_decay: float = field(init=False)
+    # Optional plug-ins (Phase 1.0.4).
+    plasticity: "HebbianRule | None" = None
+    modulators: "ModulatorBank | None" = None
+    plasticity_refresh_interval: int = 200    # ticks between W rebuilds
 
     def __post_init__(self) -> None:
         self.graph.rebuild_index()
@@ -176,6 +191,23 @@ class GraphSimulator:
             spike_mask, state.tick, state.last_spike_tick
         ).astype(np.int64)
 
+        # 8. Plasticity (Phase 1.0.4). Apply Hebbian update on the rate
+        #    trace; periodically push updated weights back into the
+        #    cached chemical matrix so the change is felt by the queue.
+        if self.plasticity is not None:
+            self.plasticity.step(rate_new)
+            next_tick = state.tick + 1
+            if next_tick % self.plasticity_refresh_interval == 0:
+                self._refresh_chemical_matrices()
+
+        # 9. Modulators (Phase 1.0.4). Advance c_m, then rewrite
+        #    LIFParams.threshold in place. The thresholds array is shared
+        #    with the LIFParams dataclass (frozen, but the array IS mutable)
+        #    so the next call to lif_step sees the new values.
+        if self.modulators is not None:
+            self.modulators.step_concentrations(rate_new)
+            self.modulators.apply_threshold_modulation(self.params.threshold)
+
         return GraphNeuralState(
             V=V_new,
             refractory=refr_new,
@@ -184,6 +216,43 @@ class GraphSimulator:
             spike_count=spike_count_new,
             last_spike_tick=last_spike_new,
         )
+
+    # ------------------------------------------------- 1.0.4 plug-ins
+
+    def attach_plasticity(self, rule: HebbianRule) -> None:
+        """Hook a Hebbian rule into the per-frame loop."""
+        self.plasticity = rule
+
+    def attach_modulators(self, bank: ModulatorBank) -> None:
+        """Hook a modulator bank into the per-frame loop.
+
+        The bank caches base_threshold and rewrites self.params.threshold
+        in place each tick (subject to the [0.1, 10] clamp in
+        ModulatorBank.apply_threshold_modulation).
+        """
+        self.modulators = bank
+
+    def _refresh_chemical_matrices(self) -> None:
+        """Rebuild the SignalQueue's per-delay W matrices from the graph.
+
+        Called after plasticity has mutated edge magnitudes via
+        ``HebbianRule.write_back_to_graph()``. Cost: O(n_chem) plus one
+        small allocation per delay bucket; cheap enough to run every
+        200 ticks.
+        """
+        if self.plasticity is not None:
+            self.plasticity.write_back_to_graph()
+        # Preserve the queue's tick + pending arrivals — we only swap
+        # the W blocks. (Schedule() reads bucket.W; arrivals() reads the
+        # buffer. Keeping both intact is correct.)
+        new_buckets = build_delay_buckets(self.graph)
+        old_buckets_by_d = {b.delay: b for b in self.queue.buckets}
+        for nb in new_buckets:
+            if nb.delay in old_buckets_by_d:
+                # In-place copy so any other reference stays consistent.
+                np.copyto(old_buckets_by_d[nb.delay].W, nb.W)
+            else:
+                self.queue.buckets.append(nb)
 
     # ----------------------------------------------- helpers for tests
 

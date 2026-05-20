@@ -889,3 +889,90 @@ load-bearing diagnostic
   uses every labeled neuron in each Atanas recording (~50-80 per
   recording). Both numbers refute Phase 0.9; the gap is preserved.
 
+
+---
+
+## [Phase 1.0.4]
+
+### [2026-05-21 03:00] Plastic edge set: top-100 outgoing chemical edges of 18 plastic neurons
+
+- Context: docs/phase1_design.md §6.1 names ~50-100 plastic edges in
+  C. elegans. The 18 well-attested "plastic neurons" (AWC, AIY, AIB,
+  AIZ, RIA, RIM, AFD, PLM, AVD — all L/R pairs except AFD/PLM/AVD
+  which I included both) have 321 outgoing chemical edges total.
+- Options: (a) take all 321; (b) pick a smaller subset of neurons;
+  (c) take all 321 of these neurons' edges but cap at top-100 by
+  weight.
+- Choice: (c). HebbianRule.from_graph picks the top-100 edges by
+  initial weight magnitude across the 18 sources.
+- Reason: keeps the per-tick plasticity cost bounded at 100 ops; the
+  weight-based ranking ensures we're plastic-izing already-functional
+  connections (the ones that matter most to network behavior) rather
+  than diluting the rule across hundreds of weak edges. Stays inside
+  the 50-100 design guidance.
+- Effect: HebbianRule defaults give n_edges=100 every time on the
+  Cook 2019 connectome.
+
+### [2026-05-21 03:05] Hebbian rule driven by the rate trace, not raw V
+
+- Context: For LIF, raw V is mostly near 0 (rest) or v_reset (just-
+  spiked). Hebbian's η·V_pre·V_post is therefore signal-starved most
+  of the time and misses the actual coactivation.
+- Choice: drive ΔW with the leaky-rate trace (the same array used as
+  the GCaMP analog in 1.0.2).
+- Reason: rate is the right physiological quantity (mean spike rate
+  ≈ pre-synaptic transmitter release rate ≈ what BCM/Hebb rules
+  actually consume in biological models). And it's a single (N,)
+  array already in the runtime — no extra state needed.
+- Effect: weight updates become smooth and bounded; the rule's
+  ``λ·W`` decay reliably dominates for low-rate pairs (most of the
+  100 edges shrink slightly; only consistently-coactive pairs grow).
+
+### [2026-05-21 03:10] Modulator effect targets *threshold*, not net_input
+
+- Context: Phase 0.9 / 0.9a modulated by *adding* a bias to chemical
+  input (``extra_input[pool] ±= gain * c_RID``). Both directions
+  failed (PHASE0.9A_REPORT.md §4): once c_RID saturated, the
+  modulator became a constant DC bias on a fixed pool.
+- Choice: Phase 1.0.4 modulates the *threshold parameter* of target
+  neurons:
+    effective_threshold[i] = base[i] * (1 + sum_m c_m * sensitivity[i,m])
+- Reason: matches the §7.3 design ("影响是参数级的,不是状态级的").
+  Multiplicative threshold modulation can produce *gain control* —
+  i.e., the same input now produces more or fewer spikes — which is
+  structurally different from a constant additive bias. With a
+  saturated c_m, threshold-modulation can still produce qualitative
+  spike-train changes (e.g., bursting suppression) that additive bias
+  cannot.
+- Effect: ModulatorBank.apply_threshold_modulation rewrites
+  LIFParams.threshold in place each tick. The [0.1, 10] clamp on the
+  scale factor keeps thresholds positive and bounded.
+
+### [2026-05-21 03:15] Plasticity vs modulator effect on anti-correlation: honest small
+
+- Setup: scripts/run_phase1_full_anticorrelation.py runs four
+  conditions (baseline / +mods / +plast / full) at 3000 ticks warmup
+  + 4000 ticks sample, 3 seeds.
+- Result (mean across seeds):
+    FC < -0.05:  29.04% → 29.05% (+mods) → 29.40% (+plast) → 29.40% (full)
+    FC < -0.10:   8.83% →  8.75% (+mods) →  9.47% (+plast) →  9.42% (full)
+    FC < -0.20:   0.22% →  0.22% (+mods) →  0.26% (+plast) →  0.26% (full)
+- Honest interpretation:
+  * Plasticity gives the entire +0.6% bump at the FC < -0.1 threshold;
+    modulators give zero.
+  * RID modulator never fires across all 3 seeds (c_RID = 0). With
+    threshold=1.2 (modulator default) and only the sparse network
+    drive there's no source of activation for the lone RID neuron.
+  * 5-HT modulator saturates to ~0.07 (low) — the 6-producer pool has
+    weak average activity. At 5-HT sensitivity=0.4 this is a 2.8%
+    multiplicative threshold change, below noise.
+- Conclusion: the infrastructure is correct and tested, but the
+  Phase 0.9 lesson holds — modulators need *behavioral state* to be
+  driven. Phase 1.5 (body + environment) is structurally required to
+  see real modulator effect.
+- This is the same null-but-informative finding the design's §11.2
+  warned about: "H_3 也可能错... 反相关不来自子图切换,来自更深的机制".
+  Plasticity alone shows the inhibition+learning interaction does
+  contribute, but the headline anti-correlation move came from the
+  Phase 1.0.2/0.3 architecture switch, not from this 1.0.4 layer.
+
