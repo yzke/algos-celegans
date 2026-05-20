@@ -833,3 +833,59 @@ load-bearing diagnostic
 - Effect: Phase 1.0.5 will use ``rate`` (not ``V``) as the trace fed
   into the three comparison metrics.
 
+
+---
+
+## [Phase 1.0.3]
+
+### [2026-05-21 02:30] 13 canonical functional circuits
+
+- Context: docs/phase1.0.md requires ≥8 functional subgraphs covering
+  the major C. elegans behavioral systems. The candidate list is in
+  docs/phase1_design.md §4.3.
+- Choice: 13 circuits in src/algos/graph/circuits.py, drawn from the
+  primary literature (White 1986, Chalfie 1985, Gray-Hill-Bargmann
+  2005, Bargmann 2012, Mori-Ohshima 1995, Avery-Horvitz 1989,
+  Faumont 2011, Kawano 2011, Schafer 2005, Liu-Sternberg 1995,
+  Wang 2013, Trojanowski 2014).
+  Names: reversal_command, forward_command, anterior_touch,
+  posterior_touch, chemosensory_amphid, thermosensory, head_motor_cpg,
+  pharyngeal_cpg, ventral_cord_motor, modulator_RID, modulator_5HT,
+  egg_laying, defecation_pacemaker.
+- Reason: covers every system named in the task book plus
+  ventral_cord_motor (the locomotion wave), modulator_5HT (the wider
+  serotonergic modulator role beyond RID), egg_laying, and
+  defecation_pacemaker — each a discrete behavior unit.
+- Effect: 10 overlap pairs emerge naturally (e.g. reversal_command
+  ∩ anterior_touch = {AVAL, AVAR, AVDL, AVDR}; chemosensory_amphid ∩
+  thermosensory = {AIYL, AIYR, AIZL, AIZR, RIAL, RIAR}). These are
+  the §4.4 design-intended overlap points where subgraphs exchange
+  information through shared nodes.
+
+### [2026-05-21 02:35] Anti-correlation diagnostic — 9% at FC < -0.1
+
+- Context: PHASE0.9_REPORT.md §3 identified "the digital model produces
+  0% of pairs at FC < -0.1 vs 17.5% real" as the central structural
+  failure of the Phase 0 architecture. Phase 1.0 is supposed to relieve
+  this by replacing CTRNN+homogeneous with LIF+sparse spiking +
+  subgraph structure.
+- Measurement: scripts/run_phase1_anticorrelation.py runs the new
+  GraphSimulator for 4000 ticks (1000 warmup) at sensory_noise=0.2
+  across 3 seeds and computes fraction-of-pairs below each threshold.
+- Result (mean across seeds):
+    FC < -0.05:   27.6%   (real worm: 34.7%)
+    FC < -0.10:    9.0%   (real worm: 27.7%)
+    FC < -0.20:    0.2%   (real worm: 16.4%)
+    FC < -0.30:    0.0%   (real worm:  8.9%)
+- Interpretation: the architectural barrier is dissolved. We went from
+  Phase 0.9's 0.0% to 9.0% at the -0.1 threshold without any
+  plasticity or modulator targeting — just LIF reset dynamics + 26
+  GABAergic neurons + sparse coding through the connectome. Stronger
+  anti-correlations (< -0.2) are still absent; those will need either
+  Phase 1.0.4 modulators or Phase 1.5 body+environment to produce.
+  Note: my direct real-baseline computation (27.7%) is higher than
+  Phase 0.9's reported 17.5% because Phase 0.9 used a digital∩real
+  intersected neuron set (~29 neurons), while the diagnostic above
+  uses every labeled neuron in each Atanas recording (~50-80 per
+  recording). Both numbers refute Phase 0.9; the gap is preserved.
+

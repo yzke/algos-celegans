@@ -1,0 +1,25 @@
+Phase 1.0.3 — anti-correlation diagnostic (no plasticity, no modulators)
+==============================================================================
+
+warmup_ticks:  1000
+sample_ticks:  4000
+seeds:         (1000, 1001, 1002)
+
+Fraction of off-diagonal FC entries below each threshold (rate trace, active neurons only):
+
+  threshold  seed=1000 seed=1001 seed=1002   mean
+  -----------------------------------------------
+  FC < -0.05     26.791%   28.809%   27.140%   27.580%
+  FC < -0.10      8.325%    9.074%    9.687%    9.029%
+  FC < -0.20      0.225%    0.168%    0.252%    0.215%
+  FC < -0.30      0.000%    0.000%    0.000%    0.000%
+
+Real-recording baseline (Atanas 2023, from phase0_9_diagnostic_results.json):
+  FC < -0.05  34.719%
+  FC < -0.10  27.739%
+  FC < -0.20  16.351%
+  FC < -0.30  8.855%
+
+Reference benchmarks from PHASE0.9_REPORT.md §3:
+  Phase 0.9 (CTRNN, all variants): FC < -0.1 ≈ 0.0%
+  Real worm (Atanas 2023):         FC < -0.1 ≈ 17.5%

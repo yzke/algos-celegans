@@ -15,6 +15,12 @@ Plus the connectome loader:
   * load_connectome_into_graph(connectome=None) → NeuralGraph
 """
 
+from algos.graph.circuits import (
+    CIRCUIT_SPECS,
+    CircuitSpec,
+    build_canonical_subgraphs,
+    summarize_subgraphs,
+)
 from algos.graph.edge import (
     DEFAULT_CHEMICAL_DELAY,
     DEFAULT_ELECTRICAL_DELAY,
@@ -52,4 +58,8 @@ __all__ = [
     "CATEGORY_PARAM_DEFAULTS",
     "VALID_SUBGRAPH_TYPES",
     "edge_key_for_type",
+    "CircuitSpec",
+    "CIRCUIT_SPECS",
+    "build_canonical_subgraphs",
+    "summarize_subgraphs",
 ]
