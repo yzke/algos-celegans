@@ -609,3 +609,82 @@ level. 0.8.1 is the foundation; 0.8.2/0.8.3 build on it.
   numbers are correct; the difference is RNG seed.
 - Lesson: any future "reproduce X" claim must specify the seed.
   Going forward, all phases should use stable seeds.
+
+---
+
+## [Phase 0.9]
+
+### [2026-05-20 16:00] Pre-impl note: `notes/algos_hypothesis_v1.md` absent
+
+- Context: the brief points to a hypothesis document
+  (`notes/algos_hypothesis_v1.md`) describing H_1 / H_1.4 in full. The
+  file does not exist in the repo.
+- Choice: proceed using the brief's own §1.2/§1.3 statement of H_1 and
+  P1 as authoritative. The brief is self-contained on what to test;
+  the missing companion document does not block the experiment.
+- Effect: H_1 statement used is verbatim from the brief — "复现真虫子动力
+  学需要 connectome + 局部变换 + **全局调质状态变量**".
+- Cross-ref: logged as Q11 in QUESTIONS.md.
+
+### [2026-05-20 16:10] Modulator as opt-in argument, not a network field
+
+- Context: a `RIDModulator` carries mutable state (`c_RID`) and needs
+  to be reset between recordings. The integration point in the
+  network's `step` could either (a) store the modulator on
+  `HeterogeneousNetwork` as a field or (b) accept it per-call.
+- Options: (a) field on network — couples one network instance to one
+  modulator state; awkward when re-running the same network on
+  multiple recordings. (b) optional argument to `step()` — caller
+  manages modulator lifecycle and resets.
+- Choice: (b) — `step(state, sens, rng, modulator=None)`. Caller calls
+  `modulator.reset()` between recordings.
+- Reason: the comparison script needs to run one network on N
+  recordings with a fresh modulator state each time; option (b) makes
+  that trivial without rebuilding the network or threading state.
+- Effect: backward compatibility (modulator=None ≡ Phase 0.8.2) is
+  trivially provable. Verified by
+  `tests/test_modulators.py::test_no_modulator_equals_phase08_2`
+  which finds max |ΔV| = 0.0 (not 1e-12; literal zero).
+
+### [2026-05-20 16:20] Tested gain ∈ {0.2, 0.5, 1.0}, kept all results
+
+- Context: brief §3.3 says default `MOD_GAIN = 0.5` and notes that
+  0.2 and 1.0 should be tried if 0.5 is too weak/strong.
+- Choice: ran all three in the comparison and reported all of them.
+  Default gain 0.5 is the headline. The other two are included to
+  show that the result is not sensitive to the specific gain choice
+  in a meaningful way.
+- Reason: brief §5 — "不要为了让 P1 成立而调整参数". Reporting the full
+  sweep is the inverse — it shows P1 fails uniformly across a
+  reasonable gain range, not just at one tuning point.
+- Effect: at all three gains, fc_similarity Δ is in {−0.0009, −0.0019,
+  −0.0022}; P1 is not met anywhere in the sweep.
+
+### [2026-05-20 16:30] P1 status reported as UNSUPPORTED
+
+- Context: brief §5 demands an honest, non-mushy report. The
+  improvement Δfc_similarity = −0.0019 is below the +0.03 partial-
+  support threshold.
+- Choice: report as "P1 NOT SUPPORTED" / "REFUTED IN ITS MINIMAL FORM"
+  in PHASE0.9_REPORT.md. Do not soften with phrasing like "modest
+  improvement on some pairs" — the headline number is the headline.
+- Reason: the project's whole methodology depends on honest negative
+  results. Phase 0.8.3 followed the same rule; consistency matters.
+- Effect: the Phase 0.10 recommendation is "do not add more
+  modulators yet — Phase 1 first."
+
+### [2026-05-20 16:35] Anti-correlation production identified as the
+load-bearing diagnostic
+
+- Context: the brief asked "数字模型现在能产生反相关吗?" (question 5).
+  The diagnostic finds: real worm 17.5% of pairs at FC < −0.1; both
+  digital configurations 0.0%.
+- Choice: elevated this finding above the FC delta in the report as
+  the single most actionable diagnostic.
+- Reason: it isolates the structural failure (unimodal noise
+  distribution) from the parameter tuning. No amount of modulator
+  tuning fixes "no anti-correlations at all"; that needs upstream
+  changes (Phase 1 sensory time structure or Phase 3 multi-modulator
+  competition with the right gating dynamics).
+- Effect: Phase 1's first smoke test is now defined as "does the
+  digital network now produce any pairs at FC < −0.1?"

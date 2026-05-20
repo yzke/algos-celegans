@@ -191,8 +191,15 @@ class HeterogeneousNetwork:
         state: HeterogeneousState,
         sensory_input: np.ndarray,
         rng: np.random.Generator,
+        modulator: "RIDModulator | None" = None,
     ) -> HeterogeneousState:
-        """Advance one tick. Returns a new HeterogeneousState."""
+        """Advance one tick. Returns a new HeterogeneousState.
+
+        If `modulator` is provided, its internal state is advanced from the
+        current V *before* per-group dispatch and its modulation term is
+        subtracted from `total_input` at the target indices. With
+        `modulator=None` this is bit-equivalent to Phase 0.8.2.
+        """
         V = state.V
         N = V.shape[0]
 
@@ -206,6 +213,11 @@ class HeterogeneousNetwork:
         else:
             noise = 0.0
         total_input = chem_input + gap_input + sensory_input + noise
+
+        # Phase 0.9 — apply optional modulator (e.g. RID).
+        if modulator is not None:
+            modulator.step(V)
+            modulator.apply_modulation(total_input)
 
         # Per-group dispatch.
         V_new = np.empty(N, dtype=np.float64)

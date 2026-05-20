@@ -1,0 +1,70 @@
+Phase 0.9 — FC-gap diagnostic with RID modulator
+==============================================================================
+recordings:        10
+matched neurons:   29
+matched pairs:     406
+tau_rid:           200.0
+mod_gain:          0.5
+runtime:           6.9s
+
+category breakdown of matched neurons:
+  sensory       : 11
+  interneuron   : 9
+  pharyngeal    : 5
+  motor         : 4
+
+Sign-reversal fraction (|FC_real| > 0.05 and |FC_dig| > 0.05):
+  category:  0.3000
+  rid:       0.3125
+  Δ:         +0.0125  (negative = RID modulator reduces sign reversals)
+
+Anti-correlation production (fraction of pairs with FC < -0.1):
+  real:      0.1749
+  category:  0.0000
+  rid:       0.0000
+
+Top-50 |diff_cat| pairs — improvement under RID modulation:
+  mean(|diff_cat| - |diff_rid|) = +0.0001
+  n improved (improvement > 0):  24/50
+  n worsened (improvement < 0):  26/50
+
+RID-related pairs (any pair touching RID, AVAL, AVAR, AVDL, AVDR, AVEL, AVER, AVBL, AVBR, PVCL, PVCR):
+  n_pairs:           106
+  mean improvement:  -0.0012
+  of these in top-50: 26
+  mean improvement in top-50 subset: +0.0012
+
+Final c_RID per recording (mean = -0.3370, std = 0.4490):
+  rec 0: c_RID = -0.5613
+  rec 1: c_RID = -0.5610
+  rec 2: c_RID = -0.5614
+  rec 3: c_RID = -0.5612
+  rec 4: c_RID = -0.5616
+  rec 5: c_RID = +0.5607
+  rec 6: c_RID = -0.5613
+  rec 7: c_RID = +0.5612
+  rec 8: c_RID = -0.5619
+  rec 9: c_RID = -0.5620
+
+Top-20 |diff_cat| pairs with RID-modulation effect:
+  pair                    cat_a        cat_b         FC_real  FC_cat  FC_rid   Δ_help
+  I3—NSML                 pharyngeal   pharyngeal     -0.678  +0.396  +0.396   -0.000
+  AIBL—AIBR               interneuron  interneuron    +0.950  +0.096  +0.104   +0.008
+  AIBR—AVER               interneuron  interneuron    +0.846  +0.057  +0.022   -0.035
+  AVAL—AVER               interneuron  interneuron    +0.893  +0.125  +0.110   -0.015
+  OLLL—OLLR               sensory      sensory        +0.792  +0.030  +0.031   +0.001
+  AVER—RID                interneuron  interneuron    -0.609  +0.143  +0.109   +0.034
+  AIBL—AVER               interneuron  interneuron    +0.827  +0.088  +0.072   -0.016
+  AIBL—AVAL               interneuron  interneuron    +0.814  +0.075  +0.078   +0.003
+  AIBR—AVAL               interneuron  interneuron    +0.815  +0.088  +0.086   -0.002
+  AVAL—RID                interneuron  interneuron    -0.564  +0.113  +0.119   -0.006
+  AVER—URYVL              interneuron  sensory        +0.677  +0.004  +0.013   +0.010
+  URYVL—URYVR             sensory      sensory        +0.685  +0.030  +0.029   -0.001
+  AIBR—RID                interneuron  interneuron    -0.512  +0.131  +0.149   -0.018
+  AIBL—URYVL              interneuron  sensory        +0.647  +0.010  +0.012   +0.001
+  AIBL—RID                interneuron  interneuron    -0.519  +0.106  +0.123   -0.017
+  AVAL—RMER               interneuron  motor          -0.535  +0.085  +0.083   +0.001
+  AVER—RMER               interneuron  motor          -0.539  +0.075  +0.054   +0.021
+  AVER—RMEL               interneuron  motor          -0.514  +0.099  +0.058   +0.040
+  URYDL—URYVL             sensory      sensory        +0.598  -0.005  -0.004   +0.000
+  AIBR—URYVL              interneuron  sensory        +0.640  +0.043  +0.044   +0.001

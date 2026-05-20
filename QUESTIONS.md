@@ -140,3 +140,35 @@ ASEL and AVAL stimulus peaks at max\|V\|=0.40). Should the schedule
 be reworked now that Phase 0.5 has identified specific circuits
 worth showcasing (e.g. anterior touch reflex → AVA activation)?
 Cosmetic.
+
+## Q14 (Phase 0.9). Missing `notes/algos_hypothesis_v1.md`
+
+The Phase 0.9 brief references this file for the full H_1 / H_1.4
+statement and the framework's revised hypothesis. The file is not in
+the repo. I proceeded using only the brief's own §1.2 / §1.3 statement
+of H_1. Question: was the v1 hypothesis document supposed to be
+checked in, or is the brief intended to be the canonical source?
+
+If there is a longer document somewhere, the Phase 0.9 report may
+miss nuance in how H_1 differs from H_0 beyond the one-line summary.
+The conclusions (P1 refuted at minimal form, Phase 1 first) don't
+depend on that nuance, but follow-up phases might.
+
+## Q15 (Phase 0.9). After P1 refutation, where does H_1 stand?
+
+The brief defines three response bands: ≥+0.10 supports H_1.4,
++0.03–+0.10 partial, <+0.03 "H_1 may need re-examination." We're in
+the third band. The Phase 0.9 report argues this does **not**
+falsify H_1 as a whole, only its minimal-mechanism instantiation —
+because the diagnostic ("zero anti-correlations from the bare
+network") suggests the modulator never had the structured input that
+would let it gate anything.
+
+Open question for the project author: is that the right call? Or
+does a clean failure of P1 in a model that has the connectome plus
+local transforms but no sensory/body coupling argue that the
+hypothesis needs more substantial revision before we try Phase 1?
+
+I lean: keep H_1, sharpen its conditions ("modulators are necessary
+*and* require structured input"), and re-test in Phase 1. But this
+is the kind of choice where author input matters.

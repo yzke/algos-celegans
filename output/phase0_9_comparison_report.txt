@@ -1,0 +1,84 @@
+Phase 0.9 — category baseline vs RID-modulated networks
+==============================================================================
+recordings: 10
+runtime:    16.0s
+tau_rid:    200.0
+gains:      0.2, 0.5, 1.0  (default is 0.5)
+
+Mean digital-vs-real score (n=10):
+  metric                            category       g=0.2       g=0.5       g=1.0   Δ(g=0.5 vs cat)
+  subspace_alignment                 +0.3532     +0.3548     +0.3576     +0.3611           +0.0044
+  temporal_correlation               -0.0140     -0.0136     -0.0128     -0.0110           +0.0012
+  fc_similarity                      +0.0606     +0.0597     +0.0587     +0.0584           -0.0019
+
+Percentile in cross-worm distribution (Phase 0.7 baseline):
+  metric                                      cross_worm  cat%   g0.2%  g0.5%  g1.0%
+  subspace_alignment              mean=+0.593, p5=+0.537   0.0%   0.0%   0.0%   0.0%
+  temporal_correlation            mean=+0.122, p5=+0.049   0.0%   0.0%   0.0%   0.0%
+  fc_similarity                   mean=+0.478, p5=+0.348   0.0%   0.0%   0.0%   0.0%
+
+P1 verdict (default gain 0.5):
+  Δfc_similarity = -0.0019
+  P1: UNSUPPORTED (Δ < +0.03)
+
+Per-recording detail:
+--- 2022-08-02-01 (labeled=113) ---
+  subspace_alignment              cat=+0.3396  g0.2=+0.3407  g0.5=+0.3431  g1.0=+0.3490
+  temporal_correlation            cat=-0.0176  g0.2=-0.0166  g0.5=-0.0149  g1.0=-0.0116
+  fc_similarity                   cat=+0.0460  g0.2=+0.0466  g0.5=+0.0481  g1.0=+0.0514
+  final c_RID (g=0.5): -0.5613
+
+--- 2023-01-17-14 (labeled=106) ---
+  subspace_alignment              cat=+0.3458  g0.2=+0.3483  g0.5=+0.3525  g1.0=+0.3591
+  temporal_correlation            cat=+0.0014  g0.2=+0.0017  g0.5=+0.0022  g1.0=+0.0033
+  fc_similarity                   cat=+0.0409  g0.2=+0.0405  g0.5=+0.0406  g1.0=+0.0427
+  final c_RID (g=0.5): -0.5610
+
+--- 2023-01-09-15 (labeled=99) ---
+  subspace_alignment              cat=+0.3538  g0.2=+0.3510  g0.5=+0.3464  g1.0=+0.3432
+  temporal_correlation            cat=+0.0096  g0.2=+0.0098  g0.5=+0.0102  g1.0=+0.0108
+  fc_similarity                   cat=+0.0122  g0.2=+0.0106  g0.5=+0.0081  g1.0=+0.0046
+  final c_RID (g=0.5): -0.5614
+
+--- 2023-01-10-07 (labeled=97) ---
+  subspace_alignment              cat=+0.3592  g0.2=+0.3631  g0.5=+0.3684  g1.0=+0.3749
+  temporal_correlation            cat=+0.0040  g0.2=+0.0050  g0.5=+0.0071  g1.0=+0.0113
+  fc_similarity                   cat=+0.0794  g0.2=+0.0796  g0.5=+0.0809  g1.0=+0.0858
+  final c_RID (g=0.5): -0.5612
+
+--- 2023-01-23-15 (labeled=96) ---
+  subspace_alignment              cat=+0.3452  g0.2=+0.3477  g0.5=+0.3525  g1.0=+0.3599
+  temporal_correlation            cat=-0.0499  g0.2=-0.0491  g0.5=-0.0475  g1.0=-0.0439
+  fc_similarity                   cat=+0.1122  g0.2=+0.1110  g0.5=+0.1091  g1.0=+0.1061
+  final c_RID (g=0.5): -0.5616
+
+--- 2022-06-14-13 (labeled=94) ---
+  subspace_alignment              cat=+0.3571  g0.2=+0.3569  g0.5=+0.3570  g1.0=+0.3610
+  temporal_correlation            cat=-0.0078  g0.2=-0.0079  g0.5=-0.0081  g1.0=-0.0088
+  fc_similarity                   cat=+0.0483  g0.2=+0.0473  g0.5=+0.0464  g1.0=+0.0471
+  final c_RID (g=0.5): +0.5607
+
+--- 2022-07-20-01 (labeled=94) ---
+  subspace_alignment              cat=+0.3602  g0.2=+0.3622  g0.5=+0.3680  g1.0=+0.3776
+  temporal_correlation            cat=-0.0410  g0.2=-0.0410  g0.5=-0.0409  g1.0=-0.0402
+  fc_similarity                   cat=+0.1072  g0.2=+0.1036  g0.5=+0.0980  g1.0=+0.0889
+  final c_RID (g=0.5): -0.5613
+
+--- 2023-01-09-22 (labeled=94) ---
+  subspace_alignment              cat=+0.3820  g0.2=+0.3857  g0.5=+0.3895  g1.0=+0.3951
+  temporal_correlation            cat=+0.0020  g0.2=+0.0014  g0.5=+0.0001  g1.0=-0.0024
+  fc_similarity                   cat=+0.0650  g0.2=+0.0641  g0.5=+0.0631  g1.0=+0.0628
+  final c_RID (g=0.5): +0.5612
+
+--- 2023-01-23-21 (labeled=94) ---
+  subspace_alignment              cat=+0.3322  g0.2=+0.3363  g0.5=+0.3449  g1.0=+0.3414
+  temporal_correlation            cat=-0.0286  g0.2=-0.0279  g0.5=-0.0263  g1.0=-0.0230
+  fc_similarity                   cat=+0.0118  g0.2=+0.0113  g0.5=+0.0112  g1.0=+0.0133
+  final c_RID (g=0.5): -0.5619
+
+--- 2023-01-09-28 (labeled=92) ---
+  subspace_alignment              cat=+0.3569  g0.2=+0.3556  g0.5=+0.3536  g1.0=+0.3501
+  temporal_correlation            cat=-0.0125  g0.2=-0.0115  g0.5=-0.0097  g1.0=-0.0059
+  fc_similarity                   cat=+0.0829  g0.2=+0.0824  g0.5=+0.0818  g1.0=+0.0813
+  final c_RID (g=0.5): -0.5620
+

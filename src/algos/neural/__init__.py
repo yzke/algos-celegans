@@ -34,6 +34,12 @@ from algos.neural.step_library import (
     slow_persistent,
     threshold_accumulator,
 )
+from algos.neural.modulators import (
+    DEFAULT_MOD_GAIN,
+    DEFAULT_TAU_RID,
+    REVERSAL_COMMAND_NEURONS,
+    RIDModulator,
+)
 
 __all__ = [
     "CTRNNParams",
@@ -57,4 +63,8 @@ __all__ = [
     "KEY_NEURON_SPECIALIZATIONS",
     "from_category_defaults",
     "from_key_neuron_specialization",
+    "RIDModulator",
+    "REVERSAL_COMMAND_NEURONS",
+    "DEFAULT_TAU_RID",
+    "DEFAULT_MOD_GAIN",
 ]
