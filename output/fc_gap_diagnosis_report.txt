@@ -1,0 +1,65 @@
+Phase 0.8 — FC gap diagnosis
+==============================================================================
+recordings:        10
+matched neurons:   29
+matched pairs:     406
+runtime:           2.2s
+
+category breakdown of matched neurons:
+  sensory       : 11
+  interneuron   : 9
+  pharyngeal    : 5
+  motor         : 4
+
+Mean |diff|:  0.2898
+Median |diff|: 0.2025
+Max |diff|:   1.4691
+
+Top-20 |diff| pairs:
+  pair                          cat_a        cat_b          FC_real    FC_dig      diff
+  I3—NSML                       pharyngeal   pharyngeal     -0.6777   +0.7914   -1.4691
+  AVER—RID                      interneuron  interneuron    -0.6090   +0.7144   -1.3234
+  AVAL—RID                      interneuron  interneuron    -0.5640   +0.7455   -1.3095
+  AVER—RMER                     interneuron  motor          -0.5391   +0.6644   -1.2036
+  AVER—RMEL                     interneuron  motor          -0.5142   +0.6775   -1.1918
+  AIBL—RID                      interneuron  interneuron    -0.5194   +0.6593   -1.1787
+  AIBR—RID                      interneuron  interneuron    -0.5123   +0.6578   -1.1701
+  AIBL—RMER                     interneuron  motor          -0.5452   +0.5728   -1.1180
+  AIBR—RMER                     interneuron  motor          -0.5494   +0.5553   -1.1046
+  AVAL—RMER                     interneuron  motor          -0.5347   +0.5245   -1.0591
+  AVAL—RMEL                     interneuron  motor          -0.5057   +0.5259   -1.0316
+  AIBL—RMEL                     interneuron  motor          -0.4616   +0.5626   -1.0242
+  AIBR—RMEL                     interneuron  motor          -0.4679   +0.5552   -1.0231
+  AVER—SMDVL                    interneuron  motor          -0.0421   +0.8251   -0.8672
+  ADAL—RID                      interneuron  interneuron    -0.2484   +0.6185   -0.8669
+  RID—RIVL                      interneuron  motor          -0.1605   +0.6957   -0.8562
+  I3—M3L                        pharyngeal   pharyngeal     -0.0496   +0.7933   -0.8429
+  I3—M3R                        pharyngeal   pharyngeal     -0.0312   +0.7859   -0.8170
+  AIZR—RID                      interneuron  interneuron    -0.2181   +0.5871   -0.8052
+  RID—URYVL                     interneuron  sensory        -0.4924   +0.3002   -0.7926
+
+Category-combo aggregates (mean |diff|, sorted):
+  combo                           n_pairs   mean    median   max
+  pharyngeal    × pharyngeal         10  0.6839  0.6398  1.4691
+  interneuron   × motor              36  0.6683  0.6261  1.2036
+  interneuron   × interneuron        36  0.5859  0.5959  1.3234
+  motor         × motor               6  0.5336  0.4970  0.7418
+  interneuron   × sensory            99  0.2436  0.2106  0.7926
+  interneuron   × pharyngeal         45  0.2378  0.2103  0.6177
+  motor         × sensory            44  0.2025  0.1584  0.6545
+  sensory       × sensory            55  0.1726  0.1217  0.6584
+  motor         × pharyngeal         20  0.1419  0.1212  0.4180
+  pharyngeal    × sensory            55  0.1169  0.0675  0.4291
+
+Top-10 hub neurons (appearances in top-50 |diff| pairs):
+  neuron    category        count
+  RID       interneuron     11
+  AVDR      interneuron     9
+  RMER      motor           8
+  SMDVL     motor           8
+  AIBL      interneuron     6
+  AIBR      interneuron     6
+  AVAL      interneuron     6
+  AVER      interneuron     6
+  AVJR      interneuron     6
+  I3        pharyngeal      5
