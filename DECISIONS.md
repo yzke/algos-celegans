@@ -352,3 +352,64 @@ Phase 1 adds a body. The brief also dispositions every Phase 0 question
   but probably not sufficient; modulators (Phase 3) and/or plasticity
   (Phase 4) are likely needed before FC similarity climbs into a
   biologically meaningful range. Recorded for the Phase 0.5 report.
+
+---
+
+## [Phase 0.6]
+
+Phase 0.6 is the internal audit of the PCA-structure similarity score
+claimed in `PHASE0.5_REPORT.md`. Scope from `logs/phase0.6_brief.md`:
+methodology doc + 3 control conditions + 50-seed null distribution +
+verdict on whether 0.65 is real signal.
+
+### [2026-05-20 12:00] PCA-similarity 0.65 is mostly metric artifact
+
+- Context: Phase 0.5 reported `pca_structure_similarity = 0.649` (mean
+  across 6 recordings, protocol A). The figure became the
+  centerpiece of "the connectome captures real low-dim geometry".
+- Method: re-derived the metric from scratch in
+  `PHASE0.6_AUDIT.md`. Ran 4 conditions on the best-labeled recording
+  (2022-08-02-01, 113 labels, T=1600):
+  - `real`: 50 sim seeds, true connectome
+  - `shuffle`: 50 shuffle+sim seeds, sparsity-matched random connectome
+  - `transpose`: 10 sim seeds, W_chem.T (W_gap symmetric → unchanged)
+  - `relu`: 10 sim seeds, true connectome with chem activation flipped
+    from `tanh(β·V)` to `ReLU(V)`.
+- Result (combined metric, mean ± std):
+  - real:      0.637 ± 0.018  [95% CI 0.600, 0.667]
+  - shuffle:   0.617 ± 0.010  [95% CI 0.600, 0.635]
+  - transpose: 0.657 ± 0.010
+  - relu:      0.648 ± 0.014
+- Real and shuffle distributions **overlap at the 95% CI**.
+  `frac(shuffle ≥ real_mean) = 0.02` is technically significant but
+  the absolute effect size is +0.02 on a 0.65 base — i.e. ~3% relative
+  difference.
+- Decomposition: the score is the mean of two components measuring
+  different things. They disagree under the null:
+  - `explained_variance_cos`: real 0.890, shuffle **0.949** —
+    shuffle scores HIGHER (random networks have more uniform spectra).
+    This component is a noise floor that the real connectome
+    underperforms on.
+  - `subspace_alignment`: real **0.383**, shuffle 0.285 — a clean
+    +0.098 effect, ~5σ above shuffle spread, no 95%-CI overlap. This
+    is the genuine signal.
+- Choice: **the combined metric should not be used as a headline going
+  forward.** Use `subspace_alignment` alone. Update
+  `PHASE0.5_REPORT.md` to flag the original 0.65 claim as artifact
+  and re-quote the defensible ~0.10 above-null signal.
+- Effects:
+  - `PHASE0.6_AUDIT.md` written end-to-end, including the methodology
+    skeleton, three controls, 50-seed null, decomposition into the two
+    components, and the verdict.
+  - `scripts/run_pca_audit.py` runs all four conditions in ~32 s,
+    producing `output/pca_audit_{report.txt,results.json}`.
+  - `PHASE0.5_REPORT.md` §4.3 and §8 amended with the audit caveat
+    (the original interpretation is kept in place with an explicit
+    `[Phase 0.6: REVISED]` marker, not silently rewritten).
+- Lesson generalized to Phase 1+: any new "similarity" claim must be
+  reported alongside a shuffled-connectome null distribution and a
+  per-trial variance estimate. The current
+  `pca_structure_similarity` function in
+  `src/algos/validation/comparison.py` already returns both
+  sub-components in its `details` dict — Phase 0.6 just confirmed
+  the sub-components, not the average, are what to read.

@@ -134,10 +134,23 @@ Both protocols are reported:
 |---|---:|---:|---:|
 | temporal_correlation              | +0.012 | **+0.034** | +0.022 |
 | functional_connectivity_similarity| +0.022 | **+0.062** | +0.040 |
-| pca_structure_similarity          | **+0.649** | +0.600 | −0.049 |
+| pca_structure_similarity (combined)¹ | **+0.649** | +0.600 | −0.049 |
+| └ explained_variance_cos¹            | +0.89      | +0.88   |       |
+| └ subspace_alignment¹                | **+0.38**  | +0.37   |       |
 
 Per-recording variance is tight: PCA structure stays in [+0.57, +0.70]
 in both protocols.
+
+¹ **Phase 0.6 audit caveat (added 2026-05-20):** the combined
+`pca_structure_similarity` score in this row is mostly a
+metric-construction artifact. See `PHASE0.6_AUDIT.md`. The defensible
+signal is `subspace_alignment` alone, where the real connectome scores
+≈ +0.38 versus ≈ +0.28 under a sparsity-matched random connectome —
+about a +0.10 effect, not the +0.65 the combined metric implies. The
+`explained_variance_cos` sub-component is a noise floor near +0.9 that
+random connectomes score slightly *higher* on. The text below was
+written before the Phase 0.6 audit; treat it as the original
+interpretation, qualified by the audit.
 
 **Reading the numbers:**
 
@@ -147,7 +160,9 @@ in both protocols.
    subspaces — captures a substantial fraction of the real worm's
    intrinsic geometry. This holds *under random sensory drive* with
    no behavior input. The connectome topology and v0.3 dynamics
-   already encode the right global structure.
+   already encode the right global structure. **[Phase 0.6: REVISED.
+   Most of 0.65 is metric artifact; the defensible signal is
+   subspace_alignment ≈ +0.10 above null.]**
 
 2. **Functional connectivity is essentially uncorrelated.** Both
    protocols give FC similarity scores near 0 (0.02 / 0.06). Even
@@ -343,6 +358,14 @@ already produce a low-dimensional activity manifold that aligns
 correlation structure is essentially unmatched — confirming Phase 1's
 body + Phase 3's modulators as necessary investments and ruling out
 "the connectome is wrong" as the source of the gap.
+
+**Phase 0.6 update:** the "~65%" claim is mostly metric artifact. The
+honest single-sentence summary is: *the bare connectome's top-10 PCA
+subspace aligns with the real worm's at ~0.38 vs ~0.28 under a
+random-connectome null — a real but modest ~3.5× effect (5σ above the
+null spread) — and the pairwise correlation structure is essentially
+unmatched, confirming Phase 1's body + Phase 3's modulators as
+necessary investments.*
 
 ---
 

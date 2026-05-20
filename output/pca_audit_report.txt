@@ -1,0 +1,16 @@
+Phase 0.6 — PCA-similarity internal audit
+============================================================
+recording:     2022-08-02-01 (labeled=113)
+runtime:       32.4s
+
+                    n   combined        ev_cos          subspace_align
+                       mean   95%CI      mean   95%CI      mean   95%CI
+  real         50   +0.637±0.018  [+0.600, +0.667]    +0.890±0.031    +0.383±0.016
+  shuffle      50   +0.617±0.010  [+0.600, +0.635]    +0.949±0.008    +0.285±0.019
+  transpose    10   +0.657±0.010  [+0.638, +0.669]    +0.955±0.008    +0.358±0.016
+  relu         10   +0.648±0.014  [+0.622, +0.666]    +0.906±0.027    +0.389±0.013
+
+frac(shuffle >= real_mean):    0.020
+real 2.5%:                     +0.5997
+shuffle 97.5%:                 +0.6347
+distributions overlap (95%CI): True
