@@ -688,3 +688,76 @@ load-bearing diagnostic
   competition with the right gating dynamics).
 - Effect: Phase 1's first smoke test is now defined as "does the
   digital network now produce any pairs at FC < −0.1?"
+
+---
+
+## [Phase 1.0.1]
+
+### [2026-05-21 01:10] Add NetworkX as a runtime dependency
+
+- Context: Phase 1.0 design (docs/phase1_design.md §1.1) treats the graph
+  as the first-class container. Pure-NumPy adjacency would force us to
+  reinvent traversal, edge-keys, and topological sort.
+- Options: (a) hand-roll dict-of-dict; (b) NetworkX MultiDiGraph;
+  (c) python-igraph.
+- Choice: NetworkX MultiDiGraph.
+- Reason: stdlib-ish, no compilation step, supports multi-edges keyed by
+  type ("chem"/"gap"/"mod"), provides topological_sort for feedforward
+  subgraphs out of the box. Performance on 302 nodes is not an issue
+  because we still vectorize the per-frame math through NumPy via
+  cached matrix views (§4.4).
+- Effect: networkx>=3.0 added to env; pyproject.toml needs the bump
+  alongside Phase 1.0.2 once dynamics land.
+
+### [2026-05-21 01:15] Gap junctions stored as mirrored directed-edge pairs
+
+- Context: Gap junctions are physically bidirectional; the graph store
+  is a directed multigraph.
+- Options: (a) single undirected store (drop MultiDiGraph for a
+  MultiGraph and lose chemical directionality); (b) one directed edge
+  with a "bidirectional=True" flag and special-case it everywhere;
+  (c) mirror — store both (i→j) and (j→i) edges of type="electrical".
+- Choice: (c) mirror.
+- Reason: keeps every traversal uniform — `out_edges(name)` returns
+  every neighbor (chemical + gap) without special-casing. The mirrored
+  pair doubles edge count for gap (2182 directed entries for ~1091
+  unique pairs) but storage is trivial at 302-node scale.
+- Effect: graph reports n_electrical = 2182 (matches W_gap_raw nonzero
+  count exactly); subgraph.materialize() does maximum(W, W.T) to be
+  defensive about partial rebuilds.
+
+### [2026-05-21 01:20] Edge.weight is unsigned magnitude; sign is separate
+
+- Context: Phase 0 baked the sign of pre-NT into W_chem entries
+  directly. That's fine for matrix algebra but conflates "how strong is
+  this synapse" with "is it inhibitory" — two physically distinct
+  properties.
+- Choice: Edge.weight is non-negative magnitude; Edge.sign carries +1
+  or -1 separately. signed_weight = sign * weight is a property.
+- Reason: per the design's "preserve causal objects" principle, the
+  pre-NT polarity is a property of the *source* neuron, not the edge
+  weight itself. Keeping them separate also makes plasticity safe
+  (weight stays in [W_min, W_max]; sign never flips).
+- Effect: loader iterates W_chem_raw (unsigned) and reads sign from
+  neurotransmitter; existing tests cross-checked against signed
+  W_chem entries pass.
+
+### [2026-05-21 01:25] Default modulator-neuron list (14 neurons)
+
+- Context: docs/phase1_design.md §7.4 says "minimum configuration:
+  implement RID class as example". But the structural promotion to
+  is_modulator=True can happen at load time without committing to
+  modulator edges (those land in 1.0.4).
+- Options: (a) only RID; (b) include the well-attested
+  neuropeptide/aminergic sources (RID, NSML/R, RICL/R, ADFL/R, HSNL/R,
+  RIH, AVKL/R, PVT, DVA); (c) load every neuron that releases any
+  neuropeptide (50+).
+- Choice: (b) — 14 canonical modulator sources.
+- Reason: matches the design's example list (§7.1) without overcommitting.
+  Phase 1.0.4 will need at least RID + a serotonergic pair (NSML/R is
+  the standard 5-HT pair); having them flagged at load saves a
+  promotion step later. The list is well below the 50+ "anything that
+  expresses a neuropeptide" upper bound that would dilute the concept.
+- Effect: graph.summary reports n_modulator_nodes = 14. Modulator edges
+  (`type="modulatory"`) remain 0 in 1.0.1 — those are 1.0.4 work.
+
