@@ -1,21 +1,28 @@
-"""Phase 0.9 — minimal RID neuropeptide modulator.
+"""Phase 0.9a — RID modulator with flipped direction (forward activation).
 
 A single global slow scalar `c_RID` that tracks the activity of the RID
-neuron with a long time constant and exerts an inhibitory modulation on
-the reversal command pool (AVA / AVD / AVE).
+neuron with a long time constant and exerts an **excitatory** modulation
+on the **forward command pool** (AVB / PVC).
 
-This is the minimal H_1.4 test described in `logs/phase0.9_brief.md`: not
-a faithful neuropeptide diffusion model, but enough to ask whether a
-single global state variable that mediates behavioral-state mutual
-exclusion closes any of the Phase 0.8 FC gap.
+Phase 0.9 (refuted, Δfc = −0.0019) targeted the reversal pool
+(AVA/AVD/AVE) with an inhibitory `-= gain * c_RID`. The Phase 0.9a
+hypothesis is that the biological direction may be inverted: RID
+*activates* forward motor command rather than *inhibiting* reversal
+command. See `logs/phase0.9a_brief.md`.
 
-Math:
+Math (Phase 0.9a):
     c_RID(t+1) = c_RID(t) + (V[idx_RID] - c_RID(t)) / tau
-    extra_input[idx in REVERSAL_POOL] -= gain * c_RID
+    extra_input[idx in FORWARD_POOL] += gain * c_RID
+
+The exported constant `REVERSAL_COMMAND_NEURONS` and the field name
+`reversal_indices` are retained for backward-compatible imports; in
+Phase 0.9a they hold the forward pool (AVBL/AVBR/PVCL/PVCR). The
+docstring and test_modulators.py describe Phase 0.9 semantics — they
+will not match this Phase 0.9a swap by design (the brief instructed no
+other code changes).
 
 The modulator is opt-in: a HeterogeneousNetwork without one is
-numerically identical to a Phase 0.8.2 network (enforced by
-`tests/test_modulators.py::test_no_modulator_equals_phase08_2`).
+numerically identical to a Phase 0.8.2 network.
 """
 
 from __future__ import annotations
@@ -31,25 +38,27 @@ from algos.connectome import ConnectomeData
 DEFAULT_TAU_RID: float = 200.0
 DEFAULT_MOD_GAIN: float = 0.5
 
-# Backward (reversal) command pool. Forward command (AVB, PVC) is
-# explicitly excluded per the brief.
+# Phase 0.9a: retargeted to the forward command pool (AVB / PVC). Name
+# kept as REVERSAL_COMMAND_NEURONS for backward-compatible exports from
+# `algos.neural`; semantically these are now the forward command neurons.
 REVERSAL_COMMAND_NEURONS: tuple[str, ...] = (
-    "AVAL", "AVAR",
-    "AVDL", "AVDR",
-    "AVEL", "AVER",
+    "AVBL", "AVBR",
+    "PVCL", "PVCR",
 )
 
 
 @dataclass
 class RIDModulator:
-    """Single global slow modulator driven by RID, inhibiting reversal pool.
+    """Phase 0.9a: global slow modulator driven by RID, *activating* forward pool.
 
     Attributes:
         idx_RID: connectome index of the RID neuron.
-        reversal_indices: connectome indices of the reversal command pool.
+        reversal_indices: connectome indices of the modulated command pool.
+            In Phase 0.9a this is the FORWARD pool (AVBL/AVBR/PVCL/PVCR);
+            the field name is preserved from Phase 0.9 for import stability.
         tau: time constant for the c_RID first-order lag (in ticks).
-        gain: scalar weight applied to c_RID when computing the
-            modulation subtracted from the reversal pool's extra_input.
+        gain: scalar weight applied to c_RID; Phase 0.9a uses += so a
+            positive c_RID excites the forward command pool.
         c_RID: current modulator state (kept in [-1, 1] by construction
             since V is clipped to that range).
         history: optional list of per-tick c_RID values for diagnostics;
@@ -76,7 +85,11 @@ class RIDModulator:
     ) -> "RIDModulator":
         """Build a RIDModulator from a loaded connectome.
 
-        Raises KeyError if RID or any of the reversal pool is absent.
+        Phase 0.9a: the default `reversal_pool` constant now contains
+        the FORWARD command neurons. Param name retained for backward
+        compatibility with any existing callers.
+
+        Raises KeyError if RID or any of the pool neurons is absent.
         """
         if "RID" not in connectome.neuron_to_idx:
             raise KeyError("RID neuron not present in connectome")
@@ -85,7 +98,7 @@ class RIDModulator:
         ]
         if missing:
             raise KeyError(
-                f"reversal pool neurons missing from connectome: {missing}"
+                f"command-pool neurons missing from connectome: {missing}"
             )
         idx_RID = connectome.idx("RID")
         reversal_indices = np.array(
@@ -115,11 +128,14 @@ class RIDModulator:
         return self.c_RID
 
     def apply_modulation(self, extra_input: np.ndarray) -> np.ndarray:
-        """Subtract `gain * c_RID` from extra_input at the reversal pool.
+        """Phase 0.9a: ADD `gain * c_RID` to extra_input at the forward pool.
+
+        (Field still named `reversal_indices` for backward-compat — in
+        Phase 0.9a it points to AVBL/AVBR/PVCL/PVCR.)
 
         Mutates `extra_input` in place and returns it for chaining.
         """
-        extra_input[self.reversal_indices] -= self.gain * self.c_RID
+        extra_input[self.reversal_indices] += self.gain * self.c_RID
         return extra_input
 
 
