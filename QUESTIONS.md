@@ -73,3 +73,70 @@ touch on ALM/AVM activating PVC→backward circuit)?
 
 `matplotlib.tight_layout` raises a UserWarning because of the share-y
 band layout. Harmless but noisy. Tolerable for Phase 0?
+
+---
+
+# Phase 0.5 — questions raised by the validation pass
+
+Items I had to decide on my own; worth revisiting before Phase 1.
+
+## Q8 (Phase 0.5). β = 1 versus a slightly-supercritical β
+
+I landed on β=1 because it restores the original `max|V| < 0.1`
+zero-input bound and matches the brief's literal `tanh(V)`. The
+trade-off: β=1 is right at the bifurcation, so relaxation timescales
+are long (~350 ticks). β=1.05 would put the system on the
+super-critical side with a small non-trivial attractor at max|V|≈0.32
+(essentially Phase 0's behavior under the new formulation) and faster
+relaxation. Is the "clean V=0 attractor" property worth the slower
+relaxation? Or would you prefer a slightly-super-critical β with a
+non-trivial attractor and faster dynamics?
+
+## Q9 (Phase 0.5). PCA-similarity metric definition
+
+The PCA structure metric averages two quantities — top-K
+explained-variance cosine and mean principal-angle cosine — which are
+both in [-1, 1] but measure different things. Is averaging them the
+right summary, or do you want them reported separately throughout?
+Right now they're separated in the JSON but combined in the text
+report.
+
+## Q10 (Phase 0.5). Behavior-conditioned protocol — was simulating AVB during forward periods the right choice?
+
+Protocol B drives backward command (AVA/AVD/AVE) when the real worm
+reverses and forward command (AVB/PVC) otherwise. An alternative:
+drive only AVA during reversals, leave the network un-driven
+otherwise. Mine adds a constant forward-command floor, which may
+over-saturate AVB downstream. I went with the symmetric version
+because it matches the binary nature of the locomotion state in real
+worms. Worth a check.
+
+## Q11 (Phase 0.5). RMD anti-correlation — bug or biology?
+
+The RMD family (head-bending motor neurons) shows mean per-neuron
+temporal correlation of −0.35 to −0.48 under protocol B. Two
+explanations are possible:
+  (a) Our model's RMD activity is *wrong direction* — a circuit bug
+      to fix in Phase 1.
+  (b) RMD activity in real worms is driven by the head-angle feedback
+      loop (RMD → head muscle → head turn → mechanosensory feedback →
+      RMD) that our Phase 0.5 sim cannot reproduce. Without that loop
+      we get an *un*-coordinated head signal.
+I lean (b). But Phase 1 should explicitly test this once the motor
+loop is in place. Reported as a Phase 1 todo, not a Phase 0.5 issue.
+
+## Q12 (Phase 0.5). Should we include the low-confidence ("?"-suffixed) NeuroPAL labels?
+
+Default loader filters them out. Including them ~30% boosts matched
+neuron counts per recording, but adds noise. For Phase 1+ validation
+we may want a confidence-weighted average instead of a hard cutoff.
+Defer for now.
+
+## Q13 (Phase 0.5). Phase 0 demo schedule
+
+The basic_simulation script was regenerated after the tanh flip;
+heatmap structure is now cleaner (clean V=0 baseline, distinct
+ASEL and AVAL stimulus peaks at max\|V\|=0.40). Should the schedule
+be reworked now that Phase 0.5 has identified specific circuits
+worth showcasing (e.g. anterior touch reflex → AVA activation)?
+Cosmetic.
