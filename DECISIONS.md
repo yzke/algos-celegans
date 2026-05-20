@@ -189,3 +189,65 @@ Phase 1 adds a body. The brief also dispositions every Phase 0 question
   briefly out of sync until the next commit, which flips the dynamics
   module to match. Two compiled cache files (`connectome.npz`) are
   unaffected — they hold raw matrices, not activation choice.
+
+### [2026-05-20 10:25] β = 1.0 for `tanh(β·V)`, not the Phase 0 β = 5
+
+- Context: the brief's Q1 action was `tanh(V)` with a parenthetical
+  "β 参数也调整,tanh 已经在 [-1, 1] 输出,不需要额外缩放". The
+  mathematical equivalence the user invoked (`tanh(x) = 2σ(2x) − 1`)
+  implies Phase 0's `σ(βV) − 0.5` with β=5 equals `0.5·tanh(2.5·V)`,
+  not `tanh(5·V)`. Direct substitution of `tanh(5V)` is ~4× the Phase
+  0 chemical drive and pins V near ±1 (test_zero_input_decays fails
+  at max|V|=0.9999).
+- Options: (a) β=5 + half-amplitude factor (rejected — reintroduces a
+  magic 0.5); (b) β tuned to match Phase 0 *local gain* (β=1.25 →
+  max|V|=0.71, still a non-trivial fixed point); (c) β=1.0 — the
+  literal reading of `tanh(V)`, lands on the *subcritical* side of the
+  bifurcation so V=0 is the unique attractor; (d) β=1.05 to match
+  Phase 0 *amplitude* (max|V|=0.32, very close to Phase 0's 0.35 but
+  the value looks fudged).
+- Choice: **(c) β = 1.0**.
+- Reason: matches the brief's literal `tanh(V)`. More importantly, it
+  restores the property `phase0.md` §3.2 originally asserted: under zero
+  sensory input the network decays to V=0 (max|V| < 0.1 in long-run).
+  Phase 0 had to relax that bound because its formulation gave a
+  non-trivial fixed point at max|V|≈0.35 — an artifact, not a desired
+  feature. The v0.3 choice eliminates that artifact entirely.
+- Effects:
+  - `CTRNNDefaults.beta` flipped from 5.0 → 1.0 in `algos.config`.
+  - The relaxation timescale near the bifurcation is long (≈350
+    ticks). Three `test_dynamics.py` cases had to extend their
+    horizons from 1500 → 5000 ticks (zero-input decay) and from
+    600 → 3000 ticks (constant-input convergence) so the system has
+    time to reach equilibrium. The substantive thresholds tightened,
+    not relaxed.
+  - `test_pulse_then_decay` rewritten: the previous version compared
+    post-pulse state against a *snapshot* of the equilibration
+    trajectory at tick 1000, but Phase 0's snapshot was on a still-
+    decaying tail. Phase 0.5 instead pre-equilibrates fully to V≈0,
+    pulses, and asserts the post-pulse state decays back near zero.
+    This is the assertion the test actually wanted to make.
+  - `output/basic_simulation_summary.txt` regenerated: during stimulus,
+    max|V| during the 5000-tick demo = 0.4038 (constant ASEL/AVAL
+    drive); when the pulse releases, final |V| < 0.01 across all 302
+    neurons. Per-tick time unchanged (0.07 ms/tick).
+  - `sigmoid()` is retained in `dynamics.py` because `test_sigmoid_basic`
+    still imports it, and removing it would be a gratuitous breakage.
+    Marked in the docstring as a helper, not the active activation.
+
+### [2026-05-20 10:30] AC2 thresholds tightened, not loosened
+
+- Context: a defensive reading of "we changed activation, test bounds
+  loosened" would be the worst-case outcome — it would mean v0.3 is a
+  step backwards. Verifying this is not the case.
+- Result: every numeric threshold in `test_dynamics.py` either stayed
+  the same (`max|V| <= 1`) or got *stricter*:
+  - zero-input max|V|: 0.7 → 0.1 (the original phase0.md §3.2 value,
+    restored)
+  - constant-input convergence diff: 1e-4 → 1e-4 (same, just at 3000
+    ticks instead of 600)
+  - pulse recovery: ||V_after − V_baseline|| < 1e-3 →
+    max|V_after| < 1e-3 (similar magnitude, cleaner semantics)
+- Effects: AC2 substantively *strengthened* by Phase 0.5. The Phase 0
+  "AC2 relaxed" caveat in `DECISIONS.md` and `PHASE0_REPORT.md` no
+  longer applies under v0.3.

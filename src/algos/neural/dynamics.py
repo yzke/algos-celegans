@@ -1,10 +1,16 @@
 """CTRNN dynamics — the heart of the Phase 0 neural skeleton.
 
-Implements design.md §3.3:
+Implements design.md §3.3 (v0.3):
 
-    chem_input[i] = sum_j W_chem[i,j] * sigmoid(V[j])
+    chem_input[i] = sum_j W_chem[i,j] * tanh(beta * V[j])
     gap_input[i]  = sum_j W_gap[i,j] * (V[j] - V[i])
     dV/dt         = (-V + chem_input + gap_input + sensory_input + noise) / tau
+
+The v0.3 design doc switched the chemical-synapse activation from a centered
+logistic (`sigmoid(V) - 0.5` — Phase 0's patch) to `tanh(beta * V)`. They are
+the same family of centered nonlinearities (`tanh(x) = 2*sigmoid(2x) - 1`); the
+tanh form is the standard CTRNN convention and removes the `-0.5` magic
+constant from the equation.
 
 Phase 0 deliberately omits modulator drive (`S @ c`) and plasticity. They are
 introduced in phases 3 and 4.
@@ -36,11 +42,10 @@ class CTRNNParams:
 
 
 def sigmoid(V: np.ndarray, beta: float) -> np.ndarray:
-    """Centered logistic in [0, 1], with `beta` controlling steepness.
+    """Standard logistic in [0, 1] with `beta` controlling steepness.
 
-    We center on V=0 with output 0.5 — i.e. the same form as the design doc.
-    `numpy.exp` on `-beta * V` with |V| <= 1 cannot overflow for any practical
-    `beta`, so we don't need a manual clamp.
+    Retained for backwards-compatible imports and `test_sigmoid_basic`. The
+    Phase-0.5+ dynamics use `tanh(beta * V)` instead (see `neural_step`).
     """
     return 1.0 / (1.0 + np.exp(-beta * V))
 
@@ -75,13 +80,12 @@ def neural_step(
     W_chem = connectome.W_chem
     W_gap = connectome.W_gap
 
-    # Chemical synaptic input: sigmoid-rectified pre-synaptic activity.
-    # We subtract the resting offset of 0.5 so that V=0 is a true fixed point
-    # under zero input. Without this correction the logistic sigmoid's value
-    # at V=0 (=0.5) produces a constant positive bias through W_chem and the
-    # network saturates within a few ticks. See DECISIONS.md "Centered chem
-    # input" for the justification.
-    chem_input = W_chem @ (sigmoid(V, params.beta) - 0.5)
+    # Chemical synaptic input: tanh-rectified pre-synaptic activity.
+    # tanh is naturally centered (tanh(0)=0), so V=0 is a true fixed point of
+    # the un-driven dynamics with no magic constants needed. See design.md
+    # §3.3 (v0.3) and DECISIONS.md "[Phase 0.5] design doc bumped to v0.3" for
+    # the discussion of why we moved away from `sigmoid(V) - 0.5`.
+    chem_input = W_chem @ np.tanh(params.beta * V)
 
     # Electrical (gap-junction) input — Laplacian form, equivalent to summing
     # W_gap[i,j] * (V[j] - V[i]) over j.

@@ -2,9 +2,9 @@ ALGOS-Celegans Phase 0 basic simulation
 ==================================================
 ticks:       5000
 neurons:     302
-runtime:     0.29s (0.058 ms/tick)
+runtime:     0.34s (0.068 ms/tick)
 all finite:  True
-max |V|:     0.3467
+max |V|:     0.4038
 
 Neuron categories:
   pharyngeal: 20
@@ -15,14 +15,14 @@ Neuron categories:
   other_neuron: 2
 
 Final-state extrema:
-  V[ASEL  ] = -0.3387
-  V[AIAL  ] = -0.3384
-  V[ASIL  ] = -0.3384
-  V[AWCL  ] = -0.3384
-  V[AWAL  ] = -0.3378
+  V[CEPVR ] = -0.0059
+  V[AS03  ] = -0.0048
+  V[DD03  ] = -0.0043
+  V[VB04  ] = -0.0041
+  V[AS08  ] = -0.0040
   ...
-  V[M1    ] =  0.3282
-  V[I6    ] =  0.3293
-  V[M3R   ] =  0.3306
-  V[M4    ] =  0.3326
-  V[M5    ] =  0.3343
+  V[CEPVL ] =  0.0050
+  V[M3L   ] =  0.0052
+  V[I1L   ] =  0.0053
+  V[NSMR  ] =  0.0054
+  V[M3R   ] =  0.0095

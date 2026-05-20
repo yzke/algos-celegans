@@ -40,10 +40,20 @@ N_NEURONS: int = 302
 
 @dataclass(frozen=True)
 class CTRNNDefaults:
-    """Default CTRNN parameters from design.md §3.3 and §3.6."""
+    """Default CTRNN parameters from design.md §3.3 and §3.6 (v0.3)."""
 
     tau: float = 10.0           # Time constant (in ticks). Initial version: uniform.
-    beta: float = 5.0           # sigmoid steepness.
+    beta: float = 1.0           # tanh activation gain. Phase 0 used 5.0 with
+                                # `sigmoid(V) - 0.5`; v0.3 switched the chem
+                                # activation to `tanh(beta*V)`. The two forms
+                                # are related by `sigmoid(βV) - 0.5
+                                # = 0.5 * tanh(βV/2)`; the literal substitution
+                                # `tanh(5V)` is much steeper than Phase 0's
+                                # `0.5*tanh(2.5V)` and pins V near ±1.
+                                # β=1.0 lands the un-driven network at the
+                                # clean V=0 fixed point (no non-trivial
+                                # attractor), which is actually what
+                                # phase0.md §3.2 originally asserted.
     noise_level: float = 0.01   # design.md §3.3.
 
 
