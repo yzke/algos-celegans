@@ -976,3 +976,41 @@ load-bearing diagnostic
   contribute, but the headline anti-correlation move came from the
   Phase 1.0.2/0.3 architecture switch, not from this 1.0.4 layer.
 
+
+---
+
+## [Phase 1.0.5]
+
+### [2026-05-21 03:45] Validation: report what is, not what was hoped
+
+- Setup: scripts/run_phase1_comparison.py runs the new graph-native
+  simulator against the same 10 Atanas 2023 recordings, same seeds
+  (1000+idx), same 2000-tick warmup as Phase 0.9's headline numbers.
+- Headline (mean across n=10):
+
+    metric                Phase 0.9 cat   Phase 1.0 baseline   Phase 1.0 full
+    subspace_alignment       +0.3532         +0.2793             +0.2771
+    temporal_correlation     -0.0140         +0.0030             +0.0020
+    fc_similarity            +0.0606         +0.0173             +0.0097
+
+  vs Phase 0.9 cat: Δfc = −0.0509, Δsubspace = −0.0761, Δtc = +0.016.
+  The new architecture *regressed* on subspace and fc, *modestly
+  improved* tc. Per-recording: 8/10 worse on fc when plast+mod on.
+- Anti-correlation (the structural diagnostic):
+  Phase 0.9 0% at FC < -0.1 → Phase 1.0 9.4% (real worm 27.7%).
+  Closed roughly 1/3 of the gap. Stronger anti-correlations (< -0.2)
+  remain near zero.
+- Subgraph behavior (scripts/run_phase1_subgraph_behavior.py):
+  forward_command ↔ reversal_command r = +0.51 (should be anti);
+  3/13 subgraphs completely silent (pharynx, motor, egg-laying);
+  modulator_RID ↔ forward_command r = +0.96 (artifactual coupling
+  through shared noise, not modulatory drive).
+- Verdict: H_3 PARTIALLY VALIDATED. The architectural unblock is
+  real (FC anti-correlation distribution goes from unimodal to
+  bimodal). The headline metrics regress for structural reasons
+  (LIF rate-trace burstiness inflates PCA distance; stochastic
+  co-firing pollutes FC). Modulators are inert without behavioral
+  state — same Phase 0.9 obstruction, unchanged.
+- Recommendation: write up honestly; do NOT tune to recover headline
+  metrics; treat Phase 1.5 (body + environment) as the next test.
+

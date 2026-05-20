@@ -1,0 +1,37 @@
+Phase 1.0.5 — graph-native simulator vs Atanas 2023
+==============================================================================
+recordings:      10
+pre_eq_ticks:    2000
+sensory_noise:   0.2
+runtime:         8.0s
+
+Mean digital-vs-real score (n=10):
+
+  metric                         Phase 0.9 cat   Phase 0.9 +RID   1.0 baseline    1.0 full  Δ (1.0_full − 0.9_cat)
+  subspace_alignment                   +0.3532          +0.3526        +0.2793     +0.2771                 -0.0761
+  temporal_correlation                 -0.0140          -0.0138        +0.0030     +0.0020                 +0.0160
+  fc_similarity                        +0.0606          +0.0616        +0.0173     +0.0097                 -0.0509
+
+Per-recording detail (Phase 1.0 plast_mod_v2):
+  2022-08-02-01            labeled=113 matched=111 | sub=+0.2400  tc=+0.0119  fc=+0.0131  spikes= 1872
+  2023-01-17-14            labeled=106 matched=105 | sub=+0.2532  tc=+0.0036  fc=+0.0019  spikes= 1818
+  2023-01-09-15            labeled= 99 matched= 99 | sub=+0.2819  tc=+0.0089  fc=+0.0200  spikes= 1931
+  2023-01-10-07            labeled= 97 matched= 95 | sub=+0.2589  tc=+0.0053  fc=+0.0022  spikes= 1805
+  2023-01-23-15            labeled= 96 matched= 96 | sub=+0.3146  tc=-0.0186  fc=+0.0185  spikes= 1732
+  2022-06-14-13            labeled= 94 matched= 94 | sub=+0.2793  tc=+0.0057  fc=-0.0098  spikes= 1830
+  2022-07-20-01            labeled= 94 matched= 94 | sub=+0.2948  tc=-0.0024  fc=+0.0465  spikes= 1792
+  2023-01-09-22            labeled= 94 matched= 93 | sub=+0.3211  tc=+0.0114  fc=+0.0176  spikes= 1867
+  2023-01-23-21            labeled= 94 matched= 94 | sub=+0.2317  tc=+0.0017  fc=-0.0029  spikes= 1795
+  2023-01-09-28            labeled= 92 matched= 91 | sub=+0.2955  tc=-0.0074  fc=-0.0099  spikes= 1847
+
+Baseline vs full (plasticity + modulators) deltas, per recording:
+  2022-08-02-01            Δsub=-0.0076 Δtc=+0.0069 Δfc=-0.0418
+  2023-01-17-14            Δsub=-0.0087 Δtc=-0.0036 Δfc=+0.0149
+  2023-01-09-15            Δsub=+0.0076 Δtc=-0.0064 Δfc=-0.0168
+  2023-01-10-07            Δsub=-0.0152 Δtc=-0.0111 Δfc=-0.0089
+  2023-01-23-15            Δsub=+0.0080 Δtc=+0.0015 Δfc=+0.0024
+  2022-06-14-13            Δsub=+0.0034 Δtc=+0.0008 Δfc=-0.0045
+  2022-07-20-01            Δsub=-0.0108 Δtc=-0.0035 Δfc=-0.0000
+  2023-01-09-22            Δsub=+0.0091 Δtc=+0.0026 Δfc=-0.0102
+  2023-01-23-21            Δsub=-0.0000 Δtc=+0.0000 Δfc=-0.0000
+  2023-01-09-28            Δsub=-0.0078 Δtc=+0.0027 Δfc=-0.0115

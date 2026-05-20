@@ -1,0 +1,63 @@
+Phase 1.0.5 — subgraph behavior probe
+==============================================================================
+n_ticks: 8000 (after 1000 warmup)
+seed:    1042
+
+Per-subgraph activity (mean of mean-rate trace):
+  reversal_command          mean=0.0186  std=0.0476  max=0.4136
+  forward_command           mean=0.0146  std=0.0264  max=0.1670
+  anterior_touch            mean=0.0886  std=0.0818  max=0.4513
+  posterior_touch           mean=0.0785  std=0.0652  max=0.3820
+  chemosensory_amphid       mean=0.1022  std=0.0570  max=0.3772
+  thermosensory             mean=0.0470  std=0.0502  max=0.3455
+  head_motor_cpg            mean=0.0334  std=0.0269  max=0.1681
+  pharyngeal_cpg            mean=0.0000  std=0.0000  max=0.0000
+  ventral_cord_motor        mean=0.0000  std=0.0000  max=0.0000
+  modulator_RID             mean=0.0269  std=0.0505  max=0.3287
+  modulator_5HT             mean=0.0417  std=0.0420  max=0.2492
+  egg_laying                mean=0.0000  std=0.0000  max=0.0000
+  defecation_pacemaker      mean=0.1037  std=0.1245  max=0.8491
+
+Inter-subgraph pairwise correlations (Pearson r):
+
+  pair                                                       r  expectation
+  ----------------------------------------------------------------------------
+  reversal_command          ↔ forward_command             +0.507  Should be ANTI-correlated (winner-take-all).
+  chemosensory_amphid       ↔ thermosensory               +0.007  Should be POSITIVELY correlated (share AIY/AIZ/RIA).
+  anterior_touch            ↔ reversal_command            +0.442  Should be POSITIVELY correlated (touch → reversal).
+  posterior_touch           ↔ forward_command             +0.408  Should be POSITIVELY correlated (touch → forward).
+  head_motor_cpg            ↔ forward_command             -0.086  Loose: head wiggle modulated by locomotion command.
+  pharyngeal_cpg            ↔ modulator_5HT               +0.000  5-HT drives feeding — positive correlation expected.
+  modulator_RID             ↔ forward_command             +0.959  RID promotes forward — positive correlation expected.
+  defecation_pacemaker      ↔ forward_command             -0.010  Loose: defecation interrupts forward locomotion.
+
+Full inter-subgraph correlation matrix:
+
+                             reversa  forward  anterio  posteri  chemose  thermos  head_mo  pharyng  ventral  modulat  modulat  egg_lay  defecat
+  reversal_command             +1.000  +0.507  +0.442  +0.208  -0.096  +0.032  -0.038  +0.000  +0.000  +0.546  +0.026  +0.000  -0.018
+  forward_command              +0.507  +1.000  +0.318  +0.408  -0.067  -0.035  -0.086  +0.000  +0.000  +0.959  -0.054  +0.000  -0.010
+  anterior_touch               +0.442  +0.318  +1.000  +0.210  -0.058  +0.012  -0.038  +0.000  +0.000  +0.336  -0.036  +0.000  -0.040
+  posterior_touch              +0.208  +0.408  +0.210  +1.000  -0.051  -0.027  -0.085  +0.000  +0.000  +0.422  -0.079  +0.000  +0.072
+  chemosensory_amphid          -0.096  -0.067  -0.058  -0.051  +1.000  +0.007  -0.051  +0.000  +0.000  -0.123  +0.005  +0.000  -0.018
+  thermosensory                +0.032  -0.035  +0.012  -0.027  +0.007  +1.000  +0.132  +0.000  +0.000  -0.006  +0.091  +0.000  +0.012
+  head_motor_cpg               -0.038  -0.086  -0.038  -0.085  -0.051  +0.132  +1.000  +0.000  +0.000  -0.066  +0.100  +0.000  +0.068
+  pharyngeal_cpg               +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000
+  ventral_cord_motor           +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000
+  modulator_RID                +0.546  +0.959  +0.336  +0.422  -0.123  -0.006  -0.066  +0.000  +0.000  +1.000  -0.046  +0.000  -0.010
+  modulator_5HT                +0.026  -0.054  -0.036  -0.079  +0.005  +0.091  +0.100  +0.000  +0.000  -0.046  +1.000  +0.000  +0.015
+  egg_laying                   +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000  +0.000
+  defecation_pacemaker         -0.018  -0.010  -0.040  +0.072  -0.018  +0.012  +0.068  +0.000  +0.000  -0.010  +0.015  +0.000  +1.000
+
+Top 5 most ANTI-correlated subgraph pairs:
+  chemosensory_amphid       ↔ modulator_RID              r = -0.1234
+  reversal_command          ↔ chemosensory_amphid        r = -0.0964
+  forward_command           ↔ head_motor_cpg             r = -0.0865
+  posterior_touch           ↔ head_motor_cpg             r = -0.0853
+  posterior_touch           ↔ modulator_5HT              r = -0.0793
+
+Top 5 most POSITIVELY correlated subgraph pairs:
+  forward_command           ↔ modulator_RID              r = +0.9592
+  reversal_command          ↔ modulator_RID              r = +0.5456
+  reversal_command          ↔ forward_command            r = +0.5070
+  reversal_command          ↔ anterior_touch             r = +0.4417
+  posterior_touch           ↔ modulator_RID              r = +0.4219
