@@ -413,3 +413,74 @@ verdict on whether 0.65 is real signal.
   `src/algos/validation/comparison.py` already returns both
   sub-components in its `details` dict — Phase 0.6 just confirmed
   the sub-components, not the average, are what to read.
+
+---
+
+## [Phase 0.8.1]
+
+Phase 0.8.1 refactors the neural-system architecture from a single
+`neural_step` to a per-neuron step-function dispatch. The brief
+(`logs/phase0.8_heterogeneous.md`) raised this as a project-assumption
+correction: a uniform CTRNN cannot reproduce real-worm dynamics
+without scale + training. Heterogeneity must be put in at the unit
+level. 0.8.1 is the foundation; 0.8.2/0.8.3 build on it.
+
+### [2026-05-20 13:00] Architecture: HeterogeneousNetwork + STEP_LIBRARY
+
+- Context: Phase 0.7 / 0.8 diagnostic showed digital fc_similarity
+  +0.03 vs real +0.48, sign-flipped in 37% of pairs. The brief's
+  proposed fix: change from homogeneous CTRNN to per-neuron step
+  functions.
+- Choice: implement as a parallel module
+  (`src/algos/neural/heterogeneous.py`); do not modify the Phase 0.7
+  code paths. The two paths coexist. Phase 0.7's `neural_step` is
+  reproduced exactly by the heterogeneous network when every neuron
+  uses `ctrnn_default` (numerical-equivalence test in `tests/test_
+  heterogeneous.py::test_homogeneous_equivalence_no_noise` shows
+  bit-identity to machine precision with noise off).
+- Per-neuron params stored as length-N ndarrays (e.g.
+  `function_params["tau"]` has shape `(N,)`). Fancy-indexing into
+  per-function groups is then a single numpy operation per group.
+- function_library is per-network (default = clone of global
+  `STEP_LIBRARY`). Tests register a `constant_zero` step function in
+  their own copy without polluting global state.
+- V_history is a fixed-length (default 5) circular buffer carried in
+  `HeterogeneousState`. Functions that need only V[t-1] (like
+  `ctrnn_default`) ignore it; functions that need V[t-1] − V[t-2]
+  (Phase 0.8.3 change detector) read it directly.
+- Why string function names instead of int ids (brief suggested int):
+  readability of `function_assignment` lists when debugging. The
+  performance cost is zero — the strings are only used at __post_init__
+  time to build the groups dict.
+
+### [2026-05-20 13:05] Numerical equivalence — bit-exact at noise=0
+
+- Context: the brief requires < 1e-6 equivalence to Phase 0.7 when
+  every neuron uses `ctrnn_default`. The mathematical form of the
+  heterogeneous step is identical (chem_input, gap_input, noise, leak,
+  clip), but operation order matters for floating-point at the ULP level.
+- Result: with noise_level=0, the heterogeneous and Phase 0.7 paths
+  agree to **machine precision** (< 1e-12). With noise on, they agree
+  exactly (RNG draws are the same: one `standard_normal(N)` per step,
+  same seed sequence). The < 1e-6 acceptance threshold is met
+  trivially.
+- Implication: 0.8.1 introduces zero numerical risk. Any future
+  divergence from Phase 0.7 dynamics is therefore traceable to
+  deliberate choices in 0.8.2/0.8.3.
+
+### [2026-05-20 13:08] Performance: 0.094 ms/tick, 100× under budget
+
+- Context: brief required < 10 ms/tick.
+- Measured (10000 ticks, 100 warm-up):
+  - Phase 0.7 `neural_step`: 0.075 ms/tick
+  - Heterogeneous, 1 group (all ctrnn_default): 0.070 ms/tick (−7%)
+  - Heterogeneous, 5 groups: 0.094 ms/tick (+26%)
+- The 1-group case is faster than Phase 0.7 because the heterogeneous
+  path computes `total_input = chem + gap + sensory + noise` once
+  outside the step function, whereas Phase 0.7 inlines them. Same
+  arithmetic; just slightly better vectorization.
+- 5-group overhead (+26%) is acceptable. Worst case for 0.8.2 (5
+  category groups) lands at ~0.1 ms/tick.
+- No bottleneck identified. If a future phase needs >50 step-function
+  groups (unlikely), the dispatch loop is the next optimization
+  target.
