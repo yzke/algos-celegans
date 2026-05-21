@@ -1133,3 +1133,36 @@ load-bearing diagnostic
   has_two_modulators` → `_has_three_modulators` (the count assertion
   necessarily changed). All other Phase 1.0 tests pass unchanged.
 
+
+### [2026-05-21 06:00] 5-HT targets extended; comprehensive comparison shows no movement
+
+- Context: Phase 1.5+.3 (data/modulators_full.md §1) listed AIY,
+  M4, and AIM as missing 5-HT targets in the Phase 1.0.4 wiring.
+  Iwanir 2016 (Curr Biol 26:2446) documents AIY food-state shift;
+  Niacaris & Avery 2003 documents M4 excitation; Jafari 2011
+  documents AIM as 5-HT uptake site.
+- Implementation:
+  - SHT_TARGET_PHARYNX: added "M4" (now 6 neurons).
+  - SHT_TARGET_INTERNEURON: new tuple ("AIYL", "AIYR", "AIML", "AIMR").
+  - SHT_SENSITIVITY_INTERNEURON: -0.3 (negative → excite, lower
+    threshold).
+- Bank now has 3 modulators with 5-HT covering 13 targets total
+  (was 9 in Phase 1.0.4).
+- Comprehensive 10-recording comparison (scripts/run_phase1_6_
+  comparison.py): Phase 1.0 vs Phase 1.6 deltas are < 0.001 on all
+  three headline metrics, identical fwd↔bwd r (+0.38 mean), identical
+  silent-subgraph rates (all 0.000), identical modulator
+  concentrations.
+- Cause is the same as 1.6.1 and 1.6.2: c_5HT = +0.052 across both
+  configs (NSM/ADF/HSN fire at the same rate), and 0.052 × 0.3 = 1.6%
+  threshold change is below the per-tick noise floor. Adding more
+  targets at small modulation magnitude doesn't change behavior.
+- Verdict: Phase 1.6 deliverables are mechanically correct and
+  bibliographically honest; they pre-build the wiring that Phase 1.5
+  body integration needs. Without Phase 1.5, the wiring is inert.
+- Decided NOT to add VC04/VC05 as 5-HT producers in Phase 1.6
+  despite data_audit.md §4.1.2 noting they're missing. Reason:
+  they're vulval-motor cells that fire 0 in the bare network anyway;
+  adding them produces no observable change. Phase 1.5 should add
+  them alongside the egg-laying body interface.
+

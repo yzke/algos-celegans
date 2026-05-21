@@ -1,0 +1,36 @@
+Phase 1.6.3 — Phase 1.0 vs Phase 1.6 comparison
+==============================================================================
+recordings:     10
+pre_eq_ticks:   2000
+sensory_noise:  0.2
+runtime:        9.9s
+
+Mean digital-vs-real metrics (n=10):
+
+  metric                         P0.9 cat       P1.0       P1.6  Δ(1.6−1.0)
+  subspace_alignment              +0.3532    +0.2771    +0.2764    -0.0007
+  temporal_correlation            -0.0140    +0.0020    +0.0015    -0.0005
+  fc_similarity                   +0.0606    +0.0097    +0.0100    +0.0003
+
+Forward↔reversal subgraph Pearson r (mean ± std):
+  phase1.0:  +0.3803 ± 0.2474
+  phase1.6:  +0.3803 ± 0.2474
+
+Fraction of off-diagonal FC pairs below each threshold (mean):
+
+   threshold        P1.0        P1.6  Δ
+  FC < -0.05     39.492%    39.555%   +0.063%
+  FC < -0.10     23.905%    23.886%   -0.019%
+  FC < -0.20      3.721%     3.704%   -0.016%
+  FC < -0.30      0.128%     0.127%   -0.001%
+
+Silent-subgraph mean rate (Phase 1.0 had these = 0.000):
+
+  subgraph                            P1.0        P1.6
+  pharyngeal_cpg                    0.0000      0.0000
+  ventral_cord_motor                0.0000      0.0000
+  egg_laying                        0.0000      0.0000
+
+Modulator concentration distributions (Phase 1.6 final):
+  phase1.0:  c_RID mean=+0.0000 std=0.0000  c_5HT mean=+0.0521 std=0.0105
+  phase1.6:  c_RID mean=+0.0000 std=0.0000  c_5HT mean=+0.0521 std=0.0105  c_tyramine mean=+0.0000 std=0.0000

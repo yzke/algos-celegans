@@ -146,8 +146,18 @@ SHT_SOURCE_NEURONS: tuple[str, ...] = (
 )
 SHT_TARGET_FORWARD: tuple[str, ...] = ("AVBL", "AVBR", "AIBL", "AIBR")
 SHT_SENSITIVITY_FORWARD: float = +0.4   # positive → raise threshold → suppress
-SHT_TARGET_PHARYNX: tuple[str, ...] = ("M3L", "M3R", "MI", "I1L", "I1R")
+# Phase 1.6.3: M4 added (Niacaris & Avery 2003: 5-HT excites M4 alongside M3
+# and MI in the pharynx) — was missing in Phase 1.0.4.
+SHT_TARGET_PHARYNX: tuple[str, ...] = ("M3L", "M3R", "MI", "M4", "I1L", "I1R")
 SHT_SENSITIVITY_PHARYNX: float = -0.4   # negative → excite feeding
+# Phase 1.6.3: NEW — AIY food-state shift (Iwanir 2016 Curr Biol 26:2446).
+# 5-HT shifts AIY toward the food-on responsive state. Also adds AIM, the
+# 5-HT-uptake interneuron pair (Jafari 2011).
+SHT_TARGET_INTERNEURON: tuple[str, ...] = (
+    "AIYL", "AIYR",    # food-state shift, primary
+    "AIML", "AIMR",    # 5-HT-uptake interneurons
+)
+SHT_SENSITIVITY_INTERNEURON: float = -0.3   # excite (lower threshold)
 
 # Phase 1.6.2: tyramine modulator. RIM is the primary tyramine producer
 # in the hermaphrodite (Alkema 2005, Pirri 2009); RIC is biosynthetically
@@ -201,15 +211,18 @@ def build_default_modulator_bank(
         tau_m=tau_m,
     )
 
-    # 5-HT modulator — multiple producers and a heterogeneous target set
-    # (forward-suppressing + pharynx-exciting).
+    # 5-HT modulator — multiple producers and a heterogeneous target set:
+    # forward-suppressing (AVB/AIB), pharynx-exciting (M3/M4/MI/I1),
+    # interneuron-state-shifting (AIY/AIM, added in Phase 1.6.3).
     sht_prod = _idx(SHT_SOURCE_NEURONS)
     sht_fwd = _idx(SHT_TARGET_FORWARD)
     sht_phx = _idx(SHT_TARGET_PHARYNX)
-    sht_tgt = np.concatenate([sht_fwd, sht_phx])
+    sht_int = _idx(SHT_TARGET_INTERNEURON)
+    sht_tgt = np.concatenate([sht_fwd, sht_phx, sht_int])
     sht_sens = np.concatenate([
         np.full(sht_fwd.shape, SHT_SENSITIVITY_FORWARD),
         np.full(sht_phx.shape, SHT_SENSITIVITY_PHARYNX),
+        np.full(sht_int.shape, SHT_SENSITIVITY_INTERNEURON),
     ])
     sht = Modulator(
         name="5HT",
@@ -249,8 +262,10 @@ __all__ = [
     "SHT_SOURCE_NEURONS",
     "SHT_TARGET_FORWARD",
     "SHT_TARGET_PHARYNX",
+    "SHT_TARGET_INTERNEURON",
     "SHT_SENSITIVITY_FORWARD",
     "SHT_SENSITIVITY_PHARYNX",
+    "SHT_SENSITIVITY_INTERNEURON",
     "DEFAULT_TAU_M_TYRAMINE",
     "TYRAMINE_SOURCE_NEURONS",
     "TYRAMINE_TARGET_NEURONS",
