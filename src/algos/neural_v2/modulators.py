@@ -149,6 +149,28 @@ SHT_SENSITIVITY_FORWARD: float = +0.4   # positive → raise threshold → suppr
 SHT_TARGET_PHARYNX: tuple[str, ...] = ("M3L", "M3R", "MI", "I1L", "I1R")
 SHT_SENSITIVITY_PHARYNX: float = -0.4   # negative → excite feeding
 
+# Phase 1.6.2: tyramine modulator. RIM is the primary tyramine producer
+# in the hermaphrodite (Alkema 2005, Pirri 2009); RIC is biosynthetically
+# tyramine→octopamine so it carries a tyramine pool too. The behaviorally
+# critical effect (Pirri 2009) is the LGC-55 chloride channel response on
+# AVB (forward command) + MC (pharyngeal contraction starter) + RMD
+# (head motor); positive sensitivity → raises threshold → suppresses
+# spiking. The fast LGC-55 arm in biology is millisecond-scale, but the
+# tonic accumulation of tyramine after sustained RIM firing is the
+# behaviorally dominant effect at the timescales we simulate; using
+# tau_m=300 (intermediate between 5-HT=500 and direct chemical=1)
+# captures that.
+DEFAULT_TAU_M_TYRAMINE: float = 300.0
+TYRAMINE_SOURCE_NEURONS: tuple[str, ...] = ("RIML", "RIMR", "RICL", "RICR")
+TYRAMINE_TARGET_NEURONS: tuple[str, ...] = (
+    "AVBL", "AVBR",                   # forward command — main behavior switch
+    "MCL", "MCR",                     # pharyngeal pump (suppress feeding
+                                      # during escape)
+    "RMDL", "RMDR",                   # head motor (freeze head)
+    "RMDDL", "RMDDR", "RMDVL", "RMDVR",   # all four head-pair members
+)
+TYRAMINE_SENSITIVITY: float = +0.5    # positive → raise threshold → suppress
+
 
 def build_default_modulator_bank(
     graph: NeuralGraph,
@@ -197,7 +219,24 @@ def build_default_modulator_bank(
         tau_m=tau_m,
     )
 
-    return ModulatorBank(modulators=[rid, sht], base_threshold=base_threshold.copy())
+    # Phase 1.6.2: tyramine modulator. RIM-driven, suppresses forward
+    # command + pharyngeal pump + head motor. Pirri 2009 LGC-55 +
+    # SER-2 / TYRA-3 receptor pathway.
+    tyr_prod = _idx(TYRAMINE_SOURCE_NEURONS)
+    tyr_tgt = _idx(TYRAMINE_TARGET_NEURONS)
+    tyr_sens = np.full(tyr_tgt.shape, TYRAMINE_SENSITIVITY, dtype=np.float64)
+    tyr = Modulator(
+        name="tyramine",
+        producer_idx=tyr_prod,
+        target_idx=tyr_tgt,
+        sensitivity=tyr_sens,
+        tau_m=DEFAULT_TAU_M_TYRAMINE,
+    )
+
+    return ModulatorBank(
+        modulators=[rid, sht, tyr],
+        base_threshold=base_threshold.copy(),
+    )
 
 
 __all__ = [
@@ -212,4 +251,8 @@ __all__ = [
     "SHT_TARGET_PHARYNX",
     "SHT_SENSITIVITY_FORWARD",
     "SHT_SENSITIVITY_PHARYNX",
+    "DEFAULT_TAU_M_TYRAMINE",
+    "TYRAMINE_SOURCE_NEURONS",
+    "TYRAMINE_TARGET_NEURONS",
+    "TYRAMINE_SENSITIVITY",
 ]

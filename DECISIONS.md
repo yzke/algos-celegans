@@ -1103,3 +1103,33 @@ load-bearing diagnostic
   Quick metric: bare-network fwd↔bwd r = +0.56 across 2 seeds
   (Phase 1.0 baseline +0.51; difference within seed noise).
 
+
+### [2026-05-21 05:30] tyramine modulator added; bare-network behavior unchanged
+
+- Context: Phase 1.5+.3 listed RIM tyramine as the highest-leverage
+  missing modulator (data/modulators_full.md §4). Pirri 2009
+  documented the LGC-55 chloride channel pathway from RIM → AVB / MC
+  / RMD as the forward-suppressing arm of the escape response.
+- Implementation: added `tyramine` Modulator to the default bank
+  alongside RID and 5-HT. Producers = {RIML, RIMR, RICL, RICR};
+  targets = AVB pair, MC pair, RMD (all four members); sensitivity
+  = +0.5 (raises threshold → suppresses). τ_m = 300 ticks
+  (intermediate between 5-HT's 500 and direct chemical's 1).
+- Mechanism validation (test_rim_stimulation_suppresses_avb): with
+  RIML+RIMR driven at sensory_input = 0.5, c_tyramine climbs to
+  ~3.0, AVBL threshold goes from 1.0 → 2.55 (= 1.0 × (1 + 3.06 ×
+  0.5)). AVB spike count under RIM stim is ≤ AVB count without stim.
+  Pathway works end-to-end.
+- Bare-network outcome: c_tyramine = 0.000 across all 2 test seeds;
+  fwd↔bwd r unchanged at +0.52 and +0.61; switching events count
+  identical; separation amplitude identical. Same Phase 0.9
+  obstruction in new clothing — RIM and RIC fire 0 times without
+  behavioral drive, so the tyramine pool is empty.
+- Verdict: tyramine arm of RIM is now ready to do work as soon as
+  Phase 1.5 (body feedback or external stim) gives RIM a reason to
+  fire. The 1.6.2 deliverable is the wiring; activation is Phase
+  1.5's job.
+- Modified one Phase 1.0.4 test: `test_default_modulator_bank_
+  has_two_modulators` → `_has_three_modulators` (the count assertion
+  necessarily changed). All other Phase 1.0 tests pass unchanged.
+

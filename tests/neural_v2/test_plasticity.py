@@ -88,12 +88,15 @@ def test_hebbian_write_back_updates_graph_edges(graph):
 # ---------------------------------------------------------------------------
 
 
-def test_default_modulator_bank_has_two_modulators(graph):
+def test_default_modulator_bank_has_three_modulators(graph):
+    """Phase 1.6.2 added tyramine as the third modulator. RID + 5-HT
+    were the Phase 1.0.4 baseline (tyramine: Pirri 2009, RIM-driven
+    AVB/MC/RMD suppression — see DECISIONS.md Phase 1.6.2)."""
     base = np.ones(graph.n_nodes)
     bank = build_default_modulator_bank(graph, base)
-    assert bank.n_modulators == 2
+    assert bank.n_modulators == 3
     names = {m.name for m in bank.modulators}
-    assert names == {"RID", "5HT"}
+    assert names == {"RID", "5HT", "tyramine"}
 
 
 def test_modulator_concentration_responds_to_rate(graph):
