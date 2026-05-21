@@ -1014,3 +1014,30 @@ load-bearing diagnostic
 - Recommendation: write up honestly; do NOT tune to recover headline
   metrics; treat Phase 1.5 (body + environment) as the next test.
 
+
+---
+
+## [Phase 1.5+]
+
+### [2026-05-21 04:00] No code changes in Phase 1.5+ except documented bugs
+
+- Context: brief §0.2 explicitly forbids modifying src/algos/graph/
+  or src/algos/neural_v2/ except for documented data bugs. Phase 1.5+
+  is documentation only.
+- Decision: respected. The audit in Phase 1.5+.1 found two
+  imperfections (tyramine arm of RIM missing; symmetric gap-junction
+  assumption) but neither is a bug — both are documented
+  approximations consistent with the data available at load time.
+  No corrective commit.
+- Effect: both findings filed in QUESTIONS.md and notes/
+  edge_sign_audit.md for Phase 1.5 design to address.
+
+### [2026-05-21 04:05] Connectome version locked at Cook 2019 corrected July 2020
+
+- Verified: SI5_corrected.xlsx is the correct version. Stats match
+  brief expectation (3709 chemical, 1091 gap pairs). GABA list (26
+  neurons) cross-checked against Gendrel 2016 — no false positives,
+  no missing canonical entries.
+- Effect: data_audit.md (Phase 1.5+.4) can cite Cook 2019 corrected
+  July 2020 as ground truth.
+

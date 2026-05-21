@@ -172,3 +172,71 @@ hypothesis needs more substantial revision before we try Phase 1?
 I lean: keep H_1, sharpen its conditions ("modulators are necessary
 *and* require structured input"), and re-test in Phase 1. But this
 is the kind of choice where author input matters.
+
+---
+
+## [Phase 1.5+]
+
+### Q-1.5+.1 — Innexin composition / rectification per electrical edge
+
+Cook 2019 SI 5 records only contact counts for gap junctions; the
+sheet does not encode rectification polarity. The current loader
+treats every electrical edge as symmetric (`sign=+1`, mirrored both
+directions), but the C. elegans literature documents asymmetric
+(rectifying) gap junctions on AVA↔A-class motor neurons (Starich
+2009, Liu 2017), AVB↔B-class motor neurons (Kawano 2011), and
+several pharyngeal connections.
+
+This is almost certainly contributing to the Phase 1.0 anomaly
+"forward ↔ reversal command +0.51 correlation" (PHASE1.0_REPORT.md
+§4): in the real worm, asymmetric coupling lets AVA depolarize
+without fully feeding back into AVB, breaking command-pool synchrony.
+
+Open question: do we want to assemble a per-edge rectification
+table from the innexin literature for Phase 1.5? Estimated effort:
+20-40 edges with published data, ~4-8 hours of literature work for
+a comprehensive table.
+
+### Q-1.5+.2 — Tyramine arm of RIM
+
+RIM releases glutamate (modeled, sign +1 via `default`) AND
+tyramine (NOT modeled). Tyramine via LGC-55 → chloride channel →
+hyperpolarizes AVB, MC, RMD (Pirri 2009). This is a candidate
+mechanism for forward-locomotion suppression during escape.
+
+If included in Phase 1.5, options are:
+  (a) add a tyramine modulator pool with RIM as producer
+      (parameter-level threshold modulation on AVB/MC/RMD); or
+  (b) add direct chemical edges from RIM with sign=-1 to those
+      targets (state-level inhibition, fast).
+
+Both are biologically plausible. Tyramine action is faster than
+typical neuropeptide modulation but slower than direct chloride
+channel opening. Phase 1.5 design should pick.
+
+### Q-1.5+.3 — Self-gap entries (14 zeroed at load)
+
+The corrected Cook 2019 gap sheet has 14 nonzero diagonal entries
+that we zero at load with the rationale "data artifacts" (cancel
+algebraically in the Laplacian). Some innexins (UNC-9 in particular)
+form intracellular hemichannels at the cell membrane — these COULD
+in principle produce self-coupling in EM. We didn't verify whether
+any of the 14 self-entries match neurons with documented hemichannel
+expression.
+
+For Phase 1.0 dynamics this is moot. For Phase 2+ (structural
+plasticity, channel-level detail) it might matter.
+
+### Q-1.5+.4 — Co-release neurons: tonic vs spike-triggered
+
+Several co-release neurons (HSN, NSM, RIM, VC4/5) are documented to
+release peptides / monoamines via either spike-triggered exocytosis
+or tonic / volume release. The current Phase 1.0 modulator subsystem
+treats them as spike-rate-driven (the rate trace drives c_m). If
+some of these are actually tonic, the modulator dynamics need a
+different driver (e.g. baseline V level rather than spike rate).
+
+Most relevant for: tyramine release by RIM (Alkema 2005 reports
+graded release), serotonin tonic release by NSM during feeding (Sze
+2000 reports basal release).
+
