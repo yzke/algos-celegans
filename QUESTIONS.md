@@ -240,3 +240,50 @@ Most relevant for: tyramine release by RIM (Alkema 2005 reports
 graded release), serotonin tonic release by NSM during feeding (Sze
 2000 reports basal release).
 
+
+### Q-1.5+.5 — Tyramine: fast (LGC-55, chloride channel) vs slow (GPCR)?
+
+RIM releases tyramine that has two distinct action timescales (Pirri
+2009): the fast LGC-55-mediated chloride channel response (~ms) and
+the slow GPCR-mediated SER-2/TYRA-3 modulation (~seconds). The fast
+arm is properly modeled as direct inhibitory chemical edges
+(sign=−1, low delay), but RIM is not GABAergic so our sign rule (per
+the GABAERGIC list) treats RIM outputs as +1. The slow arm fits the
+Modulator framework.
+
+If Phase 1.5 wires tyramine, design needs to decide: fast (modify
+loader to give RIM some output edges sign=−1 based on receptor
+expression on the target) or slow (add Modulator entry) or both.
+Both have biological basis. Pure-slow risks missing the actual
+escape-response timing.
+
+### Q-1.5+.6 — Dopamine antagonist receptor pairs
+
+DOP-1 (D1-like, Gs/cAMP, excitatory) and DOP-3 (D2-like, Gi,
+inhibitory) are expressed on overlapping target sets. The same
+target neuron can receive both signals through different receptors,
+producing direction-flipping effects depending on which receptor
+dominates. Our Modulator framework only stores a *single*
+`sensitivity` per (modulator, target) pair.
+
+Phase 1.5 design needs to decide whether to:
+  (a) split into `dopamine_excite` + `dopamine_inhibit` two modulators
+      with disjoint targets (simple, may misrepresent the biology), or
+  (b) make sensitivity a function of receptor expression (requires
+      receptor data per target neuron — significant additional data
+      collection).
+
+### Q-1.5+.7 — Co-release: separate modulators per molecule?
+
+NSM releases serotonin + NLP-3 + FLP-21 from the same vesicles
+(Frooninckx 2012). In Phase 1.0 the entire NSM output is folded
+into the 5-HT modulator. If we add NLP-3 and FLP-21 as separate
+modulator pools with the same producer set, the c_m of each is
+driven by the same producer rate — they'll be perfectly correlated
+in time, which makes them mathematically redundant unless their
+*target* sets differ.
+
+Phase 1.5 design needs to decide: separate modulators only when
+target sets are disjoint, OR maintain biological separation even
+when targets overlap (clearer accounting, no extra information).
+
