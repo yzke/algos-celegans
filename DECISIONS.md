@@ -1041,3 +1041,29 @@ load-bearing diagnostic
 - Effect: data_audit.md (Phase 1.5+.4) can cite Cook 2019 corrected
   July 2020 as ground truth.
 
+
+### [2026-05-21 04:30] Phase 1.5+ complete; documentation-only deliverable
+
+- Five sub-phases (1.5+.1 through 1.5+.5) each shipped as an
+  independent commit with no src/algos/ changes (per brief §0.2).
+- All seven planned new documents produced:
+  - notes/edge_sign_audit.md
+  - notes/subgraph_audit_part1.md
+  - notes/subgraph_audit_part2.md
+  - data/modulators_full.md
+  - data_audit.md
+  - PHASE1.0_FINDINGS.md
+  - docs/phase1.5_design.md
+  - ROADMAP.md
+- docs/phase1_design.md revised to v1.1 by APPENDING sections 15
+  (H_3 partial validation), 16 (residual problems → Phase 1.5
+  path), and 17 (link to data_audit.md). Original sections 0–14
+  untouched per brief §1.5.2 ("don't rewrite the whole document").
+- DECISIONS.md and QUESTIONS.md updated each sub-phase.
+- No tests added or modified — Phase 1.5+ was documentation only.
+- Test suite still: 94 collected, 93 passing (Phase 0.9a deliberately
+  stale test unchanged).
+- Effect: Phase 1.5 implementation now has all the biology data it
+  needs documented + a draft design (`docs/phase1.5_design.md` v0.1)
+  ready for project-author review before implementation.
+
