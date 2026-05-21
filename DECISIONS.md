@@ -1067,3 +1067,39 @@ load-bearing diagnostic
   needs documented + a draft design (`docs/phase1.5_design.md` v0.1)
   ready for project-author review before implementation.
 
+
+---
+
+## [Phase 1.6]
+
+### [2026-05-21 05:00] inhibitory_command_gate is data-only; activation deferred
+
+- Context: Phase 1.5+.2 designed an `inhibitory_command_gate` subgraph
+  (RIS, AVL, DVB, ALA, RIH) as the highest-leverage fix for the
+  forward↔reversal +0.51 anomaly. Empirical check during 1.6.1:
+  all five candidates fire **0 times** in the bare Phase 1.0
+  simulator across 2000 ticks of standard sensory drive.
+- Decision: ship the subgraph as a data-level addition to
+  CIRCUIT_SPECS (the literal Phase 1.6.1 deliverable) and document
+  honestly that it does not by itself change forward↔reversal
+  coupling (verified: r changes 0.48 → 0.49 with new seed, within
+  noise; gate spike count = 0 in both runs).
+- Why this is still useful: (1) the membership is now
+  bibliographically anchored — RIS/ALA/AVL are *biologically* the
+  inhibitory hub even when computationally dormant; (2) Phase 1.6.2
+  (tyramine arm of RIM) will give RIM the inhibitory-to-AVB pathway
+  that the connectome's GABA-only treatment misses; (3) Phase 1.5
+  body feedback can drive RIS through a stress-pressure channel.
+- The inhibitory chemical edges from RIS/AVL/DVB to command pool
+  are ALREADY in W_chem with sign=-1 (verified in
+  test_inhibitory_gate_has_gaba_edges_to_command_targets). The
+  *mechanism* works; the *driver* is missing.
+- Validated mechanically: test_ris_stimulation_inhibits_avb shows
+  that injecting input at RIS causes AVE pair (RIS's canonical
+  target, 17+18 contacts) to reduce firing. Pathway confirmed
+  end-to-end.
+- Effect: 14 subgraphs in CIRCUIT_SPECS (was 13). Numerical
+  equivalence preserved (test_no_regression_when_gate_not_used).
+  Quick metric: bare-network fwd↔bwd r = +0.56 across 2 seeds
+  (Phase 1.0 baseline +0.51; difference within seed noise).
+

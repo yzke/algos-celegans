@@ -206,6 +206,33 @@ CIRCUIT_SPECS: tuple[CircuitSpec, ...] = (
              "defecation cycle (Liu & Sternberg 1995, Wang 2013). "
              "Smallest functional CPG in the worm.",
     ),
+    CircuitSpec(
+        name="inhibitory_command_gate",
+        type="recurrent",
+        members=(
+            "RIS",           # master FLP-11 + GABA sleep / global inhibitor
+            "AVL",           # GABA, also in defecation_pacemaker (shared)
+            "DVB",           # GABA, also in defecation_pacemaker (shared)
+            "ALA",           # FLP-13 stress-induced sleep peptide source
+            "RIH",           # 5-HT / DA receiver, head-side modulator hub
+        ),
+        note="Inhibitory hub identified in Phase 1.5+.2 §A.1. RIS, AVL, "
+             "DVB are the three GABAergic interneurons not already in "
+             "command/touch/CPG subgraphs; ALA is the FLP-13 quiescence "
+             "neuron with the connectome's strongest peptidergic output "
+             "(75 contacts each onto PVDL/R); RIH is a 5-HT/DA-receiving "
+             "head modulator hub. References: Steuer Costa 2019 (RIS), "
+             "Nelson 2014 (ALA-FLP13), Hill 2014, Turek 2013. The "
+             "inhibitory chemical edges from RIS/AVL/DVB onto command "
+             "neurons are ALREADY in W_chem with sign=-1 (these "
+             "neurons are in the 26-GABA list) — adding this subgraph "
+             "is a data-level acknowledgement of their functional "
+             "role, not a dynamics change. The gate is dormant in "
+             "the bare network (member neurons fire ~0 times) and "
+             "becomes active when something drives RIS/AVL/ALA "
+             "(stimulation, Phase 1.5 body feedback, or "
+             "Phase 1.6.2 tyramine arm of RIM).",
+    ),
 )
 
 
